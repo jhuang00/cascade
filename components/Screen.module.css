@@ -1,0 +1,189 @@
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 6, 10, 0.92);
+  color: #d4d4dc;
+  padding: 32px;
+  text-align: center;
+  border-radius: 12px;
+  overflow-y: auto;
+  z-index: 20;
+}
+
+.era {
+  font-size: 11px;
+  color: #6c6c7a;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.title {
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  margin-bottom: 12px;
+  color: #f0f0f5;
+}
+
+.backstory {
+  max-width: 460px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #b0b0b8;
+  margin: 0 0 24px;
+}
+
+.primary {
+  background: #5fb3ff;
+  color: #08080c;
+  border: none;
+  padding: 11px 32px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 20px;
+  letter-spacing: 0.05em;
+}
+
+.primary:hover {
+  background: #7fc3ff;
+}
+
+.secondary {
+  background: transparent;
+  color: #8c8c95;
+  border: 1px solid #2a2a32;
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  margin-top: 12px;
+}
+
+.secondary:hover {
+  background: #1a1a22;
+  color: #d4d4dc;
+}
+
+/* Outro-specific */
+.resultLabel {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.success { color: #5fb3ff; }
+.failure { color: #ff7a7a; }
+.alternate { color: #ffc874; }
+
+.failReason {
+  font-size: 12px;
+  color: #ff9a9a;
+  margin: 0 0 12px;
+  font-style: italic;
+  max-width: 380px;
+  line-height: 1.5;
+}
+
+.scoreDisplay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 8px 0 16px;
+  padding: 16px 32px;
+  border-radius: 8px;
+  background: rgba(30, 30, 38, 0.5);
+  border: 1px solid #2a2a32;
+}
+
+.scorePass { border-color: #5fb3ff; }
+.scoreFail { border-color: #5a3a40; }
+.scoreAlt { border-color: #ffc874; }
+
+.scoreMain {
+  font-size: 32px;
+  font-weight: 500;
+  color: #f0f0f5;
+  letter-spacing: 0.02em;
+}
+
+.scorePass .scoreMain { color: #5fb3ff; }
+.scoreFail .scoreMain { color: #ff7a7a; }
+.scoreAlt .scoreMain { color: #ffc874; }
+
+.scoreDivider {
+  color: #4a4a52;
+  margin: 0 8px;
+  font-weight: 300;
+}
+
+.scoreLabel {
+  font-size: 10px;
+  color: #6c6c7a;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.statsRow {
+  display: flex;
+  gap: 24px;
+  margin: 16px 0 8px;
+  font-size: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+}
+
+.statLabel {
+  color: #6c6c7a;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.statValue {
+  color: #f0f0f5;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.factCard {
+  background: rgba(30, 30, 38, 0.7);
+  border-left: 2px solid #ffc874;
+  border-radius: 4px;
+  padding: 14px 20px;
+  margin: 16px 0;
+  max-width: 480px;
+  text-align: left;
+}
+
+.factTitle {
+  font-size: 10px;
+  color: #ffc874;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.factBody {
+  font-size: 13px;
+  color: #cfcfd4;
+  line-height: 1.7;
+}

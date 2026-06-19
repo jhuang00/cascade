@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Cascade — visual prototype</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    background: #020205;
+    color: #d4d4dc;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    overflow: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  #app {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    gap: 12px;
+  }
+  #title-bar {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #5a6470;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  #title-bar .left { display: flex; gap: 16px; align-items: center; }
+  #title-bar .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: #5fb3ff;
+    border-radius: 50%;
+    box-shadow: 0 0 6px #5fb3ff;
+    animation: blink 2s ease-in-out infinite;
+  }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  #canvas-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 720px;
+    aspect-ratio: 680 / 460;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: #02030a;
+    border-radius: 6px;
+    cursor: crosshair;
+    touch-action: none;
+  }
+  #corner-brackets {
+    position: absolute;
+    inset: 6px;
+    pointer-events: none;
+    border-radius: 4px;
+  }
+  .bracket {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-color: rgba(95, 179, 255, 0.4);
+  }
+  .bracket.tl { top: 0; left: 0; border-top: 1px solid; border-left: 1px solid; }
+  .bracket.tr { top: 0; right: 0; border-top: 1px solid; border-right: 1px solid; }
+  .bracket.bl { bottom: 0; left: 0; border-bottom: 1px solid; border-left: 1px solid; }
+  .bracket.br { bottom: 0; right: 0; border-bottom: 1px solid; border-right: 1px solid; }
+  #hud-top {
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    right: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+    z-index: 5;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .hud-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(8, 10, 16, 0.55);
+    border: 1px solid rgba(95, 179, 255, 0.18);
+    padding: 5px 11px;
+    border-radius: 3px;
+    color: #8a9ab0;
+  }
+  .hud-pill .label { color: #5a6470; }
+  .hud-pill .value { color: #cde0f5; font-weight: 500; }
+  .hud-pill .status-dot {
+    display: inline-block;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+  }
+  .hud-pill .status-dot.nominal { background: #5fb3ff; box-shadow: 0 0 5px #5fb3ff; }
+  .hud-pill .status-dot.warn { background: #ffc874; box-shadow: 0 0 5px #ffc874; }
+  .hud-pill .status-dot.alert { background: #ff7a7a; box-shadow: 0 0 5px #ff7a7a; }
+  #hud-bottom {
+    position: absolute;
+    bottom: 18px;
+    left: 18px;
+    right: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+    z-index: 5;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #5a6470;
+  }
+  #hud-bottom .tracking { color: #8a9ab0; }
+  #hud-bottom .signature { color: #5a6470; }
+  #info-panel {
+    width: 100%;
+    max-width: 720px;
+    font-size: 11px;
+    color: #5a6470;
+    line-height: 1.6;
+    text-align: center;
+  }
+  #info-panel kbd {
+    background: #15171c;
+    border: 1px solid #2a2e36;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-family: inherit;
+    font-size: 10px;
+    color: #b8c4d4;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="title-bar">
+    <div class="left">
+      <span class="dot"></span>
+      <span>Cascade · visual prototype · LEO debris tracking station</span>
+    </div>
+    <span>Mission elapsed: <span id="mission-time" style="color:#cde0f5">00:00</span></span>
+  </div>
+  <div id="canvas-wrap">
+    <canvas id="game" width="680" height="460"></canvas>
+    <div id="corner-brackets">
+      <div class="bracket tl"></div>
+      <div class="bracket tr"></div>
+      <div class="bracket bl"></div>
+      <div class="bracket br"></div>
+    </div>
+    <div id="hud-top">
+      <div class="hud-pill">
+        <span class="status-dot nominal" id="status-dot"></span>
+        <span class="label">STATUS</span>
+        <span class="value" id="status-text">NOMINAL</span>
+      </div>
+      <div class="hud-pill">
+        <span class="label">ALT</span>
+        <span class="value">487 km</span>
+      </div>
+      <div class="hud-pill">
+        <span class="label">INC</span>
+        <span class="value">51.6°</span>
+      </div>
+      <div class="hud-pill">
+        <span class="label">CLEARED</span>
+        <span class="value" id="cleared-val">0</span>
+      </div>
+    </div>
+    <div id="hud-bottom">
+      <div class="tracking">
+        Tracking <span id="track-count" style="color:#cde0f5">0</span> objects · <span id="reentered-val" style="color:#cde0f5">0</span> reentries
+      </div>
+      <div class="signature">CASCADE.MCC · 2026</div>
+    </div>
+  </div>
+  <div id="info-panel">
+    visual prototype · testing earth horizon, parallax stars, nebula, mission-control hud, reentry burnup<br>
+    move cursor across canvas to slice debris &nbsp;·&nbsp; missed objects burn up on reentry
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CASCADE — visual layer prototype
+   Focus: atmosphere over mechanics.
+   Layers being demonstrated:
+   1. Curved Earth horizon with atmospheric glow ring
+   2. Three parallax star layers (far / mid / near) with drift
+   3. Two distant nebula clouds (deep blue + magenta hint)
+   4. Mission-control HUD (corner brackets, status pills, MET timer)
+   5. Atmospheric reentry FX when junk falls off bottom
+   6. Catalog label upgrade (year + origin marker)
+   ============================================================ */
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width;
+const H = canvas.height;
+
+/* ---------- DATA ---------- */
+const CATALOG = [
+  { name: 'COSMOS 1408 fragment', year: '1982', flag: 'USSR' },
+  { name: 'FENGYUN-1C fragment', year: '1999', flag: 'CHN' },
+  { name: 'LONG MARCH 3B R/B', year: '1996', flag: 'CHN' },
+  { name: 'IRIDIUM 33 debris', year: '1997', flag: 'USA' },
+  { name: 'SL-16 R/B', year: '1991', flag: 'USSR' },
+  { name: 'COSMOS 2251 fragment', year: '1993', flag: 'RUS' },
+  { name: 'ENVISAT', year: '2002', flag: 'ESA' },
+  { name: 'BREEZE-M tank', year: '2006', flag: 'RUS' },
+  { name: 'ARIANE 5 stage', year: '2003', flag: 'ESA' },
+  { name: 'LONG MARCH 6A frag', year: '2024', flag: 'CHN' },
+  { name: 'INTELSAT 33e frag', year: '2024', flag: 'USA' },
+  { name: 'EXPLORER 1 stage', year: '1958', flag: 'USA' },
+  { name: 'VANGUARD 1', year: '1958', flag: 'USA' },
+];
+
+/* ---------- STAR LAYERS (parallax) ---------- */
+const farStars = Array.from({ length: 140 }, () => ({
+  x: Math.random() * W,
+  y: Math.random() * H * 0.85,
+  r: Math.random() * 0.6 + 0.2,
+  a: Math.random() * 0.35 + 0.1,
+  vx: -0.012,
+  twinkle: Math.random() * Math.PI * 2,
+}));
+const midStars = Array.from({ length: 65 }, () => ({
+  x: Math.random() * W,
+  y: Math.random() * H * 0.85,
+  r: Math.random() * 0.9 + 0.4,
+  a: Math.random() * 0.45 + 0.25,
+  vx: -0.04,
+  twinkle: Math.random() * Math.PI * 2,
+}));
+const nearStars = Array.from({ length: 28 }, () => ({
+  x: Math.random() * W,
+  y: Math.random() * H * 0.78,
+  r: Math.random() * 1.2 + 0.7,
+  a: Math.random() * 0.4 + 0.5,
+  vx: -0.11,
+  twinkle: Math.random() * Math.PI * 2,
+  twinkleSpeed: 0.02 + Math.random() * 0.03,
+}));
+
+/* ---------- NEBULA CLOUDS (static atmospheric hints) ---------- */
+const nebulae = [
+  { x: W * 0.18, y: H * 0.22, r1: 110, r2: 280, c1: 'rgba(80, 60, 160, 0.18)', c2: 'rgba(40, 30, 100, 0)' },
+  { x: W * 0.78, y: H * 0.32, r1: 80, r2: 220, c1: 'rgba(160, 60, 130, 0.12)', c2: 'rgba(100, 40, 100, 0)' },
+  { x: W * 0.5, y: H * 0.1, r1: 90, r2: 250, c1: 'rgba(40, 100, 180, 0.10)', c2: 'rgba(20, 60, 120, 0)' },
+];
+
+/* ---------- EARTH (curved, off-canvas center) ---------- */
+const EARTH = {
+  cx: W / 2,
+  cy: H + 1100,
+  r: 1300,
+  rotationOffset: 0,
+};
+
+/* clouds and city lights live on the Earth surface — they drift to suggest rotation */
+const earthClouds = Array.from({ length: 22 }, () => ({
+  angle: Math.random() * Math.PI * 0.6 + Math.PI * 1.2,
+  radialOffset: Math.random() * 30 + 5,
+  w: 30 + Math.random() * 80,
+  alpha: 0.05 + Math.random() * 0.08,
+}));
+const cityLights = Array.from({ length: 45 }, () => ({
+  angle: Math.random() * Math.PI * 0.7 + Math.PI * 1.15,
+  radialOffset: Math.random() * 18 + 2,
+  size: Math.random() * 0.7 + 0.4,
+  flicker: Math.random() * Math.PI * 2,
+}));
+
+/* ---------- GAMEPLAY STATE (simplified) ---------- */
+const objs = [];
+const halves = [];
+const particles = [];
+const reentries = [];
+const labels = [];
+const trail = [];
+const flashes = [];
+let junkTimer = 0;
+let cleared = 0;
+let missed = 0;
+let trackingCount = 0;
+let missionStartMs = Date.now();
+
+/* ---------- HELPERS ---------- */
+function makePoly(baseR) {
+  const sides = 5 + Math.floor(Math.random() * 3);
+  const verts = [];
+  for (let i = 0; i < sides; i++) {
+    const ang = (i / sides) * Math.PI * 2;
+    const r = baseR * (0.65 + Math.random() * 0.55);
+    verts.push({ x: Math.cos(ang) * r, y: Math.sin(ang) * r });
+  }
+  return verts;
+}
+function pickOne(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+/* ---------- BACKGROUND RENDER ---------- */
+function drawNebulae() {
+  for (const n of nebulae) {
+    const grad = ctx.createRadialGradient(n.x, n.y, n.r1 * 0.3, n.x, n.y, n.r2);
+    grad.addColorStop(0, n.c1);
+    grad.addColorStop(1, n.c2);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+  }
+}
+
+function drawStars() {
+  for (const s of farStars) {
+    s.x += s.vx;
+    if (s.x < -2) s.x = W + 2;
+    ctx.fillStyle = `rgba(220,230,255,${s.a})`;
+    ctx.fillRect(s.x, s.y, s.r, s.r);
+  }
+  for (const s of midStars) {
+    s.x += s.vx;
+    if (s.x < -2) s.x = W + 2;
+    ctx.fillStyle = `rgba(230,235,255,${s.a})`;
+    ctx.fillRect(s.x, s.y, s.r, s.r);
+  }
+  for (const s of nearStars) {
+    s.x += s.vx;
+    if (s.x < -2) s.x = W + 2;
+    s.twinkle += s.twinkleSpeed;
+    const tw = 0.65 + Math.sin(s.twinkle) * 0.35;
+    ctx.fillStyle = `rgba(240,245,255,${s.a * tw})`;
+    ctx.fillRect(s.x, s.y, s.r, s.r);
+    if (s.r > 1.4) {
+      ctx.fillStyle = `rgba(140,200,255,${s.a * tw * 0.4})`;
+      ctx.fillRect(s.x - 1, s.y, 1, s.r);
+      ctx.fillRect(s.x + s.r, s.y, 1, s.r);
+    }
+  }
+}
+
+function drawEarth() {
+  EARTH.rotationOffset += 0.00015;
+  const cx = EARTH.cx;
+  const cy = EARTH.cy;
+  const r = EARTH.r;
+
+  /* outer atmospheric haze */
+  const hazeGrad = ctx.createRadialGradient(cx, cy, r - 10, cx, cy, r + 90);
+  hazeGrad.addColorStop(0, 'rgba(90, 160, 230, 0.18)');
+  hazeGrad.addColorStop(0.35, 'rgba(60, 120, 200, 0.10)');
+  hazeGrad.addColorStop(1, 'rgba(20, 50, 110, 0)');
+  ctx.fillStyle = hazeGrad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + 90, 0, Math.PI * 2);
+  ctx.fill();
+
+  /* inner atmospheric glow band (the bright horizon line) */
+  const glowGrad = ctx.createRadialGradient(cx, cy, r - 2, cx, cy, r + 28);
+  glowGrad.addColorStop(0, 'rgba(140, 200, 255, 0.55)');
+  glowGrad.addColorStop(0.3, 'rgba(120, 190, 255, 0.30)');
+  glowGrad.addColorStop(1, 'rgba(80, 140, 220, 0)');
+  ctx.fillStyle = glowGrad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + 28, 0, Math.PI * 2);
+  ctx.fill();
+
+  /* Earth body — deep blue with subtle dawn-side lighting */
+  const earthGrad = ctx.createRadialGradient(
+    cx - r * 0.4, cy - r * 0.35, 0,
+    cx, cy, r
+  );
+  earthGrad.addColorStop(0, '#1a3458');
+  earthGrad.addColorStop(0.35, '#0c1f3a');
+  earthGrad.addColorStop(0.7, '#06122a');
+  earthGrad.addColorStop(1, '#020816');
+  ctx.fillStyle = earthGrad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  /* city lights on the dark side (drift to suggest rotation) */
+  for (const light of cityLights) {
+    const a = light.angle + EARTH.rotationOffset;
+    const dist = r - light.radialOffset;
+    const x = cx + Math.cos(a) * dist;
+    const y = cy + Math.sin(a) * dist;
+    if (y < H + 20) {
+      light.flicker += 0.05;
+      const flick = 0.6 + Math.sin(light.flicker) * 0.3;
+      ctx.fillStyle = `rgba(255, 200, 120, ${0.7 * flick})`;
+      ctx.fillRect(x, y, light.size, light.size);
+    }
+  }
+
+  /* cloud wisps */
+  for (const cloud of earthClouds) {
+    const a = cloud.angle + EARTH.rotationOffset * 1.3;
+    const dist = r - cloud.radialOffset;
+    const x = cx + Math.cos(a) * dist;
+    const y = cy + Math.sin(a) * dist;
+    if (y < H + 10) {
+      const cgrad = ctx.createRadialGradient(x, y, 2, x, y, cloud.w);
+      cgrad.addColorStop(0, `rgba(180, 210, 240, ${cloud.alpha * 2})`);
+      cgrad.addColorStop(1, `rgba(180, 210, 240, 0)`);
+      ctx.fillStyle = cgrad;
+      ctx.beginPath();
+      ctx.arc(x, y, cloud.w, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
+/* ---------- DEBRIS ---------- */
+function spawnJunk() {
+  const fromLeft = Math.random() > 0.5;
+  const x = fromLeft ? 40 + Math.random() * W * 0.25 : W - 40 - Math.random() * W * 0.25;
+  const targetX = fromLeft ? W * 0.55 + Math.random() * W * 0.35 : W * 0.1 + Math.random() * W * 0.35;
+  const palette = ['#9aa0aa','#7c8088','#a8acb6','#b89878','#8a8e98','#c4956a'];
+  const r = 14 + Math.random() * 8;
+  const cat = pickOne(CATALOG);
+  objs.push({
+    x, y: H + 30,
+    vx: (targetX - x) / 95,
+    vy: -10.2 - Math.random() * 2.5,
+    rot: Math.random() * Math.PI * 2,
+    vrot: (Math.random() - 0.5) * 0.07,
+    verts: makePoly(r),
+    color: pickOne(palette),
+    r,
+    catalog: cat,
+  });
+}
+
+function drawJunk(o, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(o.x, o.y);
+  ctx.rotate(o.rot);
+  ctx.fillStyle = o.color;
+  ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  o.verts.forEach((v, i) => i === 0 ? ctx.moveTo(v.x, v.y) : ctx.lineTo(v.x, v.y));
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  ctx.beginPath();
+  const half = o.verts.slice(0, Math.ceil(o.verts.length / 2) + 1);
+  half.forEach((v, i) => i === 0 ? ctx.moveTo(v.x, v.y) : ctx.lineTo(v.x, v.y));
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+/* ---------- FX ---------- */
+function sliceFx(o) {
+  const ang = Math.random() * Math.PI;
+  const burst = 1.8;
+  halves.push({
+    x: o.x, y: o.y, rot: o.rot,
+    vx: Math.cos(ang) * burst + o.vx * 0.6,
+    vy: Math.sin(ang) * burst + o.vy * 0.6,
+    vrot: 0.12, verts: makePoly(o.r * 0.55), color: o.color, life: 45, maxLife: 45,
+  });
+  halves.push({
+    x: o.x, y: o.y, rot: o.rot,
+    vx: -Math.cos(ang) * burst + o.vx * 0.6,
+    vy: -Math.sin(ang) * burst + o.vy * 0.6,
+    vrot: -0.12, verts: makePoly(o.r * 0.55), color: o.color, life: 45, maxLife: 45,
+  });
+  for (let i = 0; i < 14; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const s = 1.2 + Math.random() * 3.5;
+    particles.push({ x: o.x, y: o.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 25 + Math.random() * 20, maxLife: 45, color: o.color });
+  }
+  flashes.push({ x: o.x, y: o.y, r: 4, life: 12, maxLife: 12 });
+}
+
+function reentryBurnupFx(o) {
+  /* a brief orange-yellow streak rising upward from the bottom of the screen */
+  reentries.push({
+    x: o.x,
+    y: H,
+    vy: -1.8,
+    life: 50, maxLife: 50,
+    streakLen: 25 + Math.random() * 15,
+    intensity: 1,
+  });
+  /* burnup particles — orange / red, fading upward and outward */
+  for (let i = 0; i < 22; i++) {
+    const a = -Math.PI / 2 + (Math.random() - 0.5) * 1.4;
+    const s = 1.5 + Math.random() * 3;
+    const palette = ['#ff8a3a','#ffb050','#ffd070','#ff5050','#ff7030'];
+    particles.push({
+      x: o.x + (Math.random() - 0.5) * 8,
+      y: H - 4,
+      vx: Math.cos(a) * s * 0.6,
+      vy: Math.sin(a) * s,
+      life: 30 + Math.random() * 25,
+      maxLife: 55,
+      color: pickOne(palette),
+    });
+  }
+  /* small dark smoke trail above */
+  for (let i = 0; i < 8; i++) {
+    const a = -Math.PI / 2 + (Math.random() - 0.5) * 0.6;
+    const s = 0.8 + Math.random() * 1.5;
+    particles.push({
+      x: o.x + (Math.random() - 0.5) * 5,
+      y: H - 10,
+      vx: Math.cos(a) * s * 0.4,
+      vy: Math.sin(a) * s * 0.7,
+      life: 50 + Math.random() * 25,
+      maxLife: 75,
+      color: 'rgba(80, 70, 60, 0.45)',
+    });
+  }
+}
+
+/* ---------- INPUT ---------- */
+function pos(e) {
+  const r = canvas.getBoundingClientRect();
+  const t = e.touches ? e.touches[0] : e;
+  return {
+    x: (t.clientX - r.left) * (W / r.width),
+    y: (t.clientY - r.top) * (H / r.height),
+  };
+}
+
+function addTrail(x, y) {
+  trail.push({ x, y, life: 14 });
+  if (trail.length > 22) trail.shift();
+}
+
+function checkHits() {
+  if (trail.length < 2) return;
+  const p1 = trail[trail.length - 2];
+  const p2 = trail[trail.length - 1];
+  const dx = p2.x - p1.x, dy = p2.y - p1.y;
+  if (dx*dx + dy*dy < 6) return;
+  for (let i = objs.length - 1; i >= 0; i--) {
+    const o = objs[i];
+    const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+    const ddx = o.x - mx, ddy = o.y - my;
+    if (ddx*ddx + ddy*ddy < (o.r + 10) ** 2) {
+      sliceFx(o);
+      objs.splice(i, 1);
+      cleared++;
+      const labelText = `${o.catalog.name} · ${o.catalog.year} · ${o.catalog.flag}`;
+      labels.push({ x: o.x, y: o.y - 18, text: labelText, life: 50, maxLife: 50, color: '#9fd6f5' });
+      updateHUD();
+    }
+  }
+}
+
+canvas.addEventListener('mousemove', e => { const p = pos(e); addTrail(p.x, p.y); checkHits(); });
+canvas.addEventListener('mouseleave', () => { trail.length = 0; });
+canvas.addEventListener('touchstart', e => { e.preventDefault(); trail.length = 0; const p = pos(e); addTrail(p.x, p.y); }, { passive: false });
+canvas.addEventListener('touchmove', e => { e.preventDefault(); const p = pos(e); addTrail(p.x, p.y); checkHits(); }, { passive: false });
+canvas.addEventListener('touchend', e => { e.preventDefault(); trail.length = 0; }, { passive: false });
+
+/* ---------- HUD ---------- */
+function updateHUD() {
+  document.getElementById('cleared-val').textContent = cleared;
+  document.getElementById('reentered-val').textContent = missed;
+  document.getElementById('track-count').textContent = trackingCount;
+}
+function updateMissionTime() {
+  const elapsed = Math.floor((Date.now() - missionStartMs) / 1000);
+  const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
+  const ss = String(elapsed % 60).padStart(2, '0');
+  document.getElementById('mission-time').textContent = `${mm}:${ss}`;
+}
+function updateStatus() {
+  let level = 'NOMINAL';
+  let dotClass = 'nominal';
+  if (objs.length >= 6) { level = 'ELEVATED'; dotClass = 'warn'; }
+  if (objs.length >= 10 || missed > 12) { level = 'CRITICAL'; dotClass = 'alert'; }
+  document.getElementById('status-text').textContent = level;
+  const dot = document.getElementById('status-dot');
+  dot.className = 'status-dot ' + dotClass;
+}
+
+/* ---------- LOOP ---------- */
+function loop() {
+  /* background — full clear to deep space */
+  ctx.fillStyle = '#02030a';
+  ctx.fillRect(0, 0, W, H);
+
+  drawNebulae();
+  drawStars();
+  drawEarth();
+
+  /* spawn */
+  junkTimer++;
+  if (junkTimer > 55) { spawnJunk(); junkTimer = 0; }
+
+  /* debris (clip to area above Earth glow band roughly) */
+  trackingCount = objs.length;
+  for (let i = objs.length - 1; i >= 0; i--) {
+    const o = objs[i];
+    o.x += o.vx; o.y += o.vy; o.vy += 0.18; o.rot += o.vrot;
+    drawJunk(o, 1);
+    if (o.y > H + 30) {
+      reentryBurnupFx(o);
+      objs.splice(i, 1);
+      missed++;
+      updateHUD();
+    }
+  }
+
+  /* halves */
+  for (let i = halves.length - 1; i >= 0; i--) {
+    const h = halves[i];
+    h.x += h.vx; h.y += h.vy; h.vy += 0.18; h.rot += h.vrot; h.life--;
+    drawJunk(h, Math.max(0, h.life / h.maxLife));
+    if (h.life <= 0) halves.splice(i, 1);
+  }
+
+  /* particles */
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx; p.y += p.vy; p.vy += 0.1; p.life--;
+    ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x - 1, p.y - 1, 2, 2);
+    ctx.globalAlpha = 1;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+
+  /* reentry streaks — vertical flames rising from bottom */
+  for (let i = reentries.length - 1; i >= 0; i--) {
+    const r = reentries[i];
+    r.y += r.vy;
+    r.life--;
+    const a = Math.max(0, r.life / r.maxLife);
+    const grad = ctx.createLinearGradient(r.x, r.y, r.x, r.y + r.streakLen);
+    grad.addColorStop(0, `rgba(255,180,80,${a * 0.05})`);
+    grad.addColorStop(0.4, `rgba(255,150,60,${a * 0.55})`);
+    grad.addColorStop(0.8, `rgba(255,90,40,${a * 0.75})`);
+    grad.addColorStop(1, `rgba(255,200,100,${a * 0.2})`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(r.x - 2, r.y, 4, r.streakLen);
+    if (r.life <= 0) reentries.splice(i, 1);
+  }
+
+  /* flashes */
+  for (let i = flashes.length - 1; i >= 0; i--) {
+    const f = flashes[i];
+    f.r += 2.5; f.life--;
+    ctx.globalAlpha = Math.max(0, f.life / f.maxLife) * 0.5;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = 1;
+    if (f.life <= 0) flashes.splice(i, 1);
+  }
+
+  /* labels */
+  for (let i = labels.length - 1; i >= 0; i--) {
+    const l = labels[i];
+    l.y -= 0.5; l.life--;
+    const a = Math.max(0, l.life / l.maxLife);
+    ctx.globalAlpha = a;
+    ctx.font = '10px ui-monospace, "SF Mono", Menlo, monospace';
+    ctx.fillStyle = l.color || '#9fd6f5';
+    ctx.textAlign = 'center';
+    /* small bracket frame around label */
+    const w = ctx.measureText(l.text).width;
+    ctx.strokeStyle = `rgba(95,179,255,${a * 0.4})`;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(l.x - w/2 - 6, l.y - 9, w + 12, 13);
+    ctx.fillText(l.text, l.x, l.y);
+    ctx.globalAlpha = 1;
+    if (l.life <= 0) labels.splice(i, 1);
+  }
+
+  /* trail */
+  for (let i = trail.length - 1; i >= 0; i--) {
+    trail[i].life--;
+    if (trail[i].life <= 0) trail.splice(i, 1);
+  }
+  if (trail.length >= 2) {
+    for (let i = 1; i < trail.length; i++) {
+      const p1 = trail[i-1], p2 = trail[i];
+      const a = (i / trail.length) * (p1.life / 14);
+      ctx.strokeStyle = `rgba(180,220,255,${a * 0.9})`;
+      ctx.lineWidth = i * 0.45 + 0.5;
+      ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+    }
+  }
+
+  updateMissionTime();
+  updateStatus();
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>

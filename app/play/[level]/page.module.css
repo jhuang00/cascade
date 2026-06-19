@@ -1,0 +1,235 @@
+.app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  gap: 12px;
+}
+
+.titleBar {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: #5a6470;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  gap: 8px;
+}
+
+.titleLeft {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.titleRight {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #5fb3ff;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #5fb3ff;
+  flex-shrink: 0;
+  animation: blink 2s ease-in-out infinite;
+}
+
+.metLabel { color: #5a6470; }
+.metValue { color: #cde0f5; }
+
+.muteBtn {
+  background: transparent;
+  color: #6c6c7a;
+  border: 1px solid #2a2a32;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+}
+
+.muteBtn:hover {
+  background: #1a1a22;
+  color: #d4d4dc;
+}
+
+.canvasWrap {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  aspect-ratio: 680 / 460;
+}
+
+/* Corner brackets */
+.brackets {
+  position: absolute;
+  inset: 6px;
+  pointer-events: none;
+  border-radius: 4px;
+}
+
+.bracket {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-color: rgba(95, 179, 255, 0.4);
+}
+
+.tl { top: 0; left: 0; border-top: 1px solid; border-left: 1px solid; }
+.tr { top: 0; right: 0; border-top: 1px solid; border-right: 1px solid; }
+.bl { bottom: 0; left: 0; border-bottom: 1px solid; border-left: 1px solid; }
+.br { bottom: 0; right: 0; border-bottom: 1px solid; border-right: 1px solid; }
+
+/* Mission-control status pills */
+.hudTop {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  right: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+  z-index: 4;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(8, 10, 16, 0.55);
+  border: 1px solid rgba(95, 179, 255, 0.18);
+  padding: 5px 11px;
+  border-radius: 3px;
+  color: #8a9ab0;
+}
+
+.pillLabel { color: #5a6470; }
+.pillValue { color: #cde0f5; font-weight: 500; }
+
+.statusDot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.nominal {
+  background: #5fb3ff;
+  box-shadow: 0 0 5px #5fb3ff;
+}
+.elevated {
+  background: #ffc874;
+  box-shadow: 0 0 5px #ffc874;
+}
+.critical {
+  background: #ff7a7a;
+  box-shadow: 0 0 5px #ff7a7a;
+}
+
+/* Bottom telemetry */
+.hudBottom {
+  position: absolute;
+  bottom: 18px;
+  left: 18px;
+  right: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+  z-index: 4;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #5a6470;
+}
+
+.tracking { color: #8a9ab0; }
+.trackValue { color: #cde0f5; }
+.signature { color: #5a6470; }
+
+/* Complete screen */
+.completeScreen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 6, 10, 0.92);
+  padding: 32px;
+  text-align: center;
+  border-radius: 8px;
+  z-index: 20;
+}
+
+.completeEra {
+  font-size: 11px;
+  color: #6c6c7a;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.completeTitle {
+  font-size: 30px;
+  font-weight: 500;
+  color: #f0f0f5;
+  margin-bottom: 16px;
+}
+
+.completeBody {
+  max-width: 460px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #b0b0b8;
+  margin-bottom: 24px;
+}
+
+.completeBtn {
+  background: #5fb3ff;
+  color: #08080c;
+  border: none;
+  padding: 11px 32px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+}
+
+.completeBtn:hover { background: #7fc3ff; }
+
+.help {
+  width: 100%;
+  max-width: 720px;
+  font-size: 11px;
+  color: #5a5a65;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.help kbd {
+  background: #1a1a22;
+  border: 1px solid #3a3a45;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: inherit;
+  font-size: 10px;
+  color: #d4d4dc;
+}

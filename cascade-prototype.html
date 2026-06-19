@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Cascade — prototype v4</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    background: #050508;
+    color: #d4d4dc;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    overflow: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  #app {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    gap: 12px;
+  }
+  #title-bar {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: #6c6c7a;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  #mute-btn {
+    background: transparent;
+    color: #6c6c7a;
+    border: 1px solid #2a2a32;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+  }
+  #mute-btn:hover { background: #1a1a22; color: #d4d4dc; }
+  #canvas-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 720px;
+    aspect-ratio: 680 / 460;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: #08080c;
+    border-radius: 12px;
+    cursor: crosshair;
+    touch-action: none;
+  }
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(6, 6, 10, 0.92);
+    color: #d4d4dc;
+    padding: 32px;
+    text-align: center;
+    border-radius: 12px;
+    overflow-y: auto;
+  }
+  .screen.active { display: flex; }
+  .screen .era {
+    font-size: 11px;
+    color: #6c6c7a;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .screen h1 {
+    font-size: 30px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    margin-bottom: 12px;
+    color: #f0f0f5;
+  }
+  .screen .tagline {
+    font-size: 12px;
+    color: #8c8c95;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+  .screen .backstory {
+    max-width: 460px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #b0b0b8;
+    margin: 0 0 24px;
+  }
+  .tutorial-card {
+    background: rgba(30, 30, 38, 0.65);
+    border: 1px solid #2a2a32;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 6px 0;
+    max-width: 460px;
+    text-align: left;
+  }
+  .tutorial-card h3 {
+    font-size: 11px;
+    color: #ffc874;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  .tutorial-card p {
+    font-size: 13px;
+    color: #cfcfd4;
+    line-height: 1.55;
+  }
+  .screen button.primary {
+    background: #5fb3ff;
+    color: #08080c;
+    border: none;
+    padding: 11px 32px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 20px;
+    letter-spacing: 0.05em;
+  }
+  .screen button.primary:hover { background: #7fc3ff; }
+  .screen button.secondary {
+    background: transparent;
+    color: #8c8c95;
+    border: 1px solid #2a2a32;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    margin-top: 12px;
+  }
+  .screen button.secondary:hover { background: #1a1a22; color: #d4d4dc; }
+  .fact-card {
+    background: rgba(30, 30, 38, 0.7);
+    border-left: 2px solid #ffc874;
+    border-radius: 4px;
+    padding: 14px 20px;
+    margin: 16px 0;
+    max-width: 480px;
+    text-align: left;
+  }
+  .fact-card h3 {
+    font-size: 10px;
+    color: #ffc874;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .fact-card p {
+    font-size: 13px;
+    color: #cfcfd4;
+    line-height: 1.7;
+  }
+  .stats-row {
+    display: flex;
+    gap: 24px;
+    margin: 16px 0 8px;
+    font-size: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .stat { display: flex; flex-direction: column; gap: 2px; align-items: center; }
+  .stat-label { color: #6c6c7a; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .stat-value { color: #f0f0f5; font-size: 18px; font-weight: 500; }
+  .score-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 8px 0 16px;
+    padding: 16px 32px;
+    border-radius: 8px;
+    background: rgba(30, 30, 38, 0.5);
+    border: 1px solid #2a2a32;
+  }
+  .score-display.score-pass { border-color: #5fb3ff; }
+  .score-display.score-fail { border-color: #5a3a40; }
+  .score-main { font-size: 32px; font-weight: 500; color: #f0f0f5; letter-spacing: 0.02em; }
+  .score-display.score-pass .score-main { color: #5fb3ff; }
+  .score-display.score-fail .score-main { color: #ff7a7a; }
+  .score-divider { color: #4a4a52; margin: 0 8px; font-weight: 300; }
+  .score-label {
+    font-size: 10px;
+    color: #6c6c7a;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+  .fail-reason {
+    font-size: 12px;
+    color: #ff9a9a;
+    margin: 0 0 12px;
+    font-style: italic;
+    max-width: 380px;
+    line-height: 1.5;
+  }
+  .outro-result {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .outro-result.success { color: #5fb3ff; }
+  .outro-result.failure { color: #ff7a7a; }
+  #hud {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    display: none;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #8c8c95;
+    pointer-events: none;
+    z-index: 5;
+  }
+  #hud.active { display: flex; }
+  .hud-block {
+    background: rgba(6, 6, 10, 0.55);
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid rgba(60, 60, 68, 0.4);
+  }
+  .hud-block .v { color: #f0f0f5; font-weight: 500; }
+  .hud-block .warn { color: #ff7a7a; }
+  .hud-block .gold { color: #ffc874; }
+  kbd {
+    background: #1a1a22;
+    border: 1px solid #3a3a45;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-family: inherit;
+    font-size: 10px;
+    color: #d4d4dc;
+  }
+  #help {
+    width: 100%;
+    max-width: 720px;
+    font-size: 11px;
+    color: #5a5a65;
+    line-height: 1.6;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="title-bar">
+    <span>Cascade · prototype v4</span>
+    <button id="mute-btn">Sound: on</button>
+  </div>
+  <div id="canvas-wrap">
+    <canvas id="game" width="680" height="460"></canvas>
+    <div id="hud">
+      <div class="hud-block"><span id="hud-level">Lv 1</span> · <span id="hud-time" class="v">60</span>s</div>
+      <div class="hud-block"><span id="hud-score" class="v">0</span> / <span id="hud-threshold">100</span> pts</div>
+      <div class="hud-block">missed <span id="hud-missed" class="warn">0</span> / <span id="hud-misslimit">12</span></div>
+      <div class="hud-block" id="hud-sats-block" style="display:none;">sats hit <span id="hud-destroyed" class="warn">0</span> / <span id="hud-destroylimit">3</span></div>
+    </div>
+    <div id="screen-menu" class="screen active">
+      <div class="era">A web game by JH</div>
+      <h1>Cascade</h1>
+      <div class="tagline">slicing through the history of orbital debris</div>
+      <p class="backstory">Six levels. The real history of low Earth orbit, played out as cuts and catches. The labels are real. The numbers are real. The cascade is real.</p>
+      <button class="primary" id="btn-start">Start</button>
+    </div>
+    <div id="screen-intro" class="screen"></div>
+    <div id="screen-outro" class="screen"></div>
+    <div id="screen-complete" class="screen">
+      <div class="era">Stage 1 complete</div>
+      <h1>To be continued</h1>
+      <p class="backstory">Levels 3 through 6 are in development. The Fengyun-1C cinematic event, the Iridium / Cosmos predictive collision, the megaconstellation discrimination layer, and the Kessler cascade endgame are next.</p>
+      <button class="primary" id="btn-menu">Back to menu</button>
+    </div>
+  </div>
+  <div id="help">
+    move to slice gray junk &nbsp;·&nbsp; hold <kbd>SPACE</kbd> + click (or tap on mobile) gold pulses to collect &nbsp;·&nbsp; avoid blue satellites
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CASCADE — Stage 1 prototype, v4
+   Adds: state machine, level system, intros, outros, audio.
+   Built on the v3 mechanics (slice + tap-to-collect, arc sats).
+   ============================================================ */
+
+/* ---------- CONFIG ---------- */
+const CONFIG = {
+  score: { sliceJunk: 10, sliceActive: -25, sliceRare: 5, tapRare: 100 },
+  tap: { maxDurationMs: 280, maxDistancePx: 12 },
+  hitRadiusBuffer: 10,
+};
+
+/* ---------- CATALOG (real-world labels) ---------- */
+const CATALOG = {
+  junk: [
+    'COSMOS 1408 fragment','FENGYUN-1C fragment','LONG MARCH 3B R/B',
+    'IRIDIUM 33 debris','SL-16 R/B (1991)','COSMOS 2251 fragment',
+    'ENVISAT (dead 2012)','BREEZE-M tank','SL-8 R/B','ZENIT-2 fragment',
+    'ARIANE 5 stage','LONG MARCH 6A frag','INTELSAT 33e frag'
+  ],
+  active: [
+    'STARLINK-30421','STARLINK-29055','KUIPER-178','KUIPER-204',
+    'ONEWEB-642','QIANFAN-44','GUOWANG-12','ONEWEB-518'
+  ],
+  rare: [
+    'VANGUARD 1 (1958)',"ED WHITE's glove (1965)","COLLINS' camera (1966)",
+    'WEST FORD needle (1963)','EXPLORER 1 stage','SPUTNIK 4 fragment'
+  ],
+};
+
+/* ---------- LEVELS ----------
+   Each level config drives intro screen, gameplay, and outro.
+   spawn rates are in frames (60fps). 0 = disabled for this level.
+*/
+const LEVELS = [
+  {
+    id: 1,
+    era: '1958–1990',
+    title: 'The Quiet',
+    backstory: "The world is small. Sputnik orbits. We start throwing things up — and forgetting about them. Nobody is counting yet.",
+    tutorials: [
+      { title: 'Slice', body: 'Move your cursor across the screen. A trail follows your motion. Anything it crosses gets sliced.' },
+      { title: 'Gray junk', body: "These are real objects abandoned in orbit. Old satellites, spent rocket stages, even tools dropped by astronauts. They're not coming down on their own." },
+    ],
+    duration: 60,
+    spawn: { junk: 55, active: 0, rare: 0 },
+    passScore: 100,
+    hardFails: { missed: 12 },
+    outroFact: 'Vanguard 1, launched in 1958, is the oldest human-made object still in orbit. It will remain there for an estimated 240 more years. By 1990 there were approximately 5,000 catalogued objects in orbit.',
+  },
+  {
+    id: 2,
+    era: '1990–2006',
+    title: 'The Breakup',
+    backstory: "Rocket stages don't just sit there. In the vacuum of space, leftover fuel cooks off and they explode silently. Hundreds of them did, between 1990 and 2006.",
+    tutorials: [
+      { title: 'Gold pulse — rare artifacts', body: 'Gold pulses are historical objects worth preserving. Tap them on mobile, or hold SPACE and click on desktop, to collect them. Each one is worth +100 points.' },
+      { title: 'Blue — active satellites', body: "Blue satellites are working infrastructure — GPS, weather, internet. Don't slice them. Each one destroyed costs −25 points and damages real services. They follow stable orbital arcs — let them pass." },
+    ],
+    duration: 75,
+    spawn: { junk: 45, active: 200, rare: 380 },
+    passScore: 250,
+    hardFails: { missed: 15, destroyed: 3 },
+    outroFact: 'Between 1961 and 2006, there were 190 known satellite breakups in orbit. Most were caused by leftover fuel in spent rocket stages exploding years after their missions ended. Some of those stages are still up there today — the same kind that broke up the others.',
+  },
+];
+
+/* ---------- AUDIO (Web Audio API synthesis) ---------- */
+const Audio = (function() {
+  let ctx = null;
+  let master = null;
+  let muted = false;
+
+  function init() {
+    if (ctx) return;
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    master = ctx.createGain();
+    master.gain.value = muted ? 0 : 0.5;
+    master.connect(ctx.destination);
+  }
+
+  function setMuted(m) {
+    muted = m;
+    if (master) master.gain.value = muted ? 0 : 0.5;
+  }
+  function isMuted() { return muted; }
+
+  function playSlice() {
+    if (!ctx || muted) return;
+    const dur = 0.12;
+    const buf = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) {
+      const t = i / ctx.sampleRate;
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-t * 28);
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 3500;
+    filter.Q.value = 1.2;
+    const gain = ctx.createGain();
+    gain.gain.value = 0.35;
+    src.connect(filter);
+    filter.connect(gain);
+    gain.connect(master);
+    src.start();
+  }
+
+  function playCollect() {
+    if (!ctx || muted) return;
+    const notes = [659.25, 987.77];
+    notes.forEach((freq, i) => {
+      const delay = i * 0.045;
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const gain = ctx.createGain();
+      const now = ctx.currentTime + delay;
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.16, now + 0.006);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start(now);
+      osc.stop(now + 0.5);
+    });
+  }
+
+  function playActiveHit() {
+    if (!ctx || muted) return;
+    const osc = ctx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(70, ctx.currentTime + 0.35);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    osc.connect(gain);
+    gain.connect(master);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.4);
+  }
+
+  function playClick() {
+    if (!ctx || muted) return;
+    const osc = ctx.createOscillator();
+    osc.type = 'square';
+    osc.frequency.value = 800;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.05, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+    osc.connect(gain);
+    gain.connect(master);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.05);
+  }
+
+  function playLevelWin() {
+    if (!ctx || muted) return;
+    const notes = [523.25, 659.25, 783.99];
+    notes.forEach((freq, i) => {
+      const delay = i * 0.1;
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const gain = ctx.createGain();
+      const now = ctx.currentTime + delay;
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.14, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start(now);
+      osc.stop(now + 0.6);
+    });
+  }
+
+  function playLevelLose() {
+    if (!ctx || muted) return;
+    const notes = [392.00, 311.13];
+    notes.forEach((freq, i) => {
+      const delay = i * 0.18;
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const gain = ctx.createGain();
+      const now = ctx.currentTime + delay;
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.14, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start(now);
+      osc.stop(now + 0.7);
+    });
+  }
+
+  return { init, setMuted, isMuted, playSlice, playCollect, playActiveHit, playClick, playLevelWin, playLevelLose };
+})();
+
+/* ---------- CANVAS & STATE ---------- */
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width;
+const H = canvas.height;
+
+const state = {
+  screen: 'menu',
+  currentLevelIdx: 0,
+  objs: [], halves: [], particles: [], labels: [], trail: [], flashes: [], rings: [],
+  score: 0, cleared: 0, missed: 0, collected: 0, destroyed: 0,
+  junkTimer: 0, activeTimer: 0, rareTimer: 0,
+  screenFlash: 0,
+  pressStart: null,
+  collectMode: false,
+  levelStartMs: 0,
+  timeRemaining: 0,
+  resultSuccess: false,
+};
+
+const stars = Array.from({length: 90}, () => ({
+  x: Math.random()*W, y: Math.random()*H,
+  r: Math.random()*0.9 + 0.2, a: Math.random()*0.5 + 0.15,
+}));
+
+/* ---------- HELPERS ---------- */
+function makePoly(baseR) {
+  const sides = 5 + Math.floor(Math.random()*3);
+  const verts = [];
+  for (let i = 0; i < sides; i++) {
+    const ang = (i/sides) * Math.PI * 2;
+    const r = baseR * (0.65 + Math.random()*0.55);
+    verts.push({ x: Math.cos(ang)*r, y: Math.sin(ang)*r });
+  }
+  return verts;
+}
+function pickOne(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
+function currentLevel() { return LEVELS[state.currentLevelIdx]; }
+
+/* ---------- SPAWNERS ---------- */
+function spawnJunk() {
+  const fromLeft = Math.random() > 0.5;
+  const x = fromLeft ? 40 + Math.random()*W*0.25 : W - 40 - Math.random()*W*0.25;
+  const targetX = fromLeft ? W*0.55 + Math.random()*W*0.35 : W*0.1 + Math.random()*W*0.35;
+  const palette = ['#9a9aa3','#7c7c85','#aaaab2','#b89878','#8a8a92'];
+  const r = 16 + Math.random()*8;
+  state.objs.push({
+    type: 'junk',
+    x, y: H + 30,
+    vx: (targetX - x) / 95,
+    vy: -10.5 - Math.random()*2.5,
+    rot: Math.random() * Math.PI * 2,
+    vrot: (Math.random() - 0.5) * 0.07,
+    verts: makePoly(r),
+    color: pickOne(palette),
+    r,
+    label: pickOne(CATALOG.junk),
+  });
+}
+
+function spawnActive() {
+  const fromLeft = Math.random() > 0.5;
+  const xStart = fromLeft ? -30 : W + 30;
+  const xEnd = fromLeft ? W + 30 : -30;
+  const yBaseline = 240 + Math.random()*90;
+  const arcHeight = 90 + Math.random()*40;
+  const speed = 1.3 + Math.random()*0.5;
+  const direction = fromLeft ? 1 : -1;
+  state.objs.push({
+    type: 'active',
+    x: xStart, y: yBaseline,
+    xStart, xEnd, yBaseline, arcHeight, direction, speed,
+    rot: 0, vrot: 0.005,
+    r: 13, color: '#5fb3ff',
+    label: pickOne(CATALOG.active),
+    glowPhase: 0,
+  });
+}
+
+function spawnRare() {
+  const fromLeft = Math.random() > 0.5;
+  const y = 100 + Math.random()*240;
+  const vx = (fromLeft ? 1 : -1) * (0.5 + Math.random()*0.4);
+  const r = 12;
+  state.objs.push({
+    type: 'rare',
+    x: fromLeft ? -25 : W + 25, y,
+    vx, vy: 0,
+    rot: Math.random() * Math.PI * 2,
+    vrot: (Math.random() - 0.5) * 0.02,
+    verts: makePoly(r),
+    color: '#ffc874',
+    r,
+    label: pickOne(CATALOG.rare),
+    pulse: 0, bobPhase: Math.random()*Math.PI*2, baseY: y,
+  });
+}
+
+/* ---------- RENDERERS ---------- */
+function drawJunk(o, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(o.x, o.y);
+  ctx.rotate(o.rot);
+  ctx.fillStyle = o.color;
+  ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  o.verts.forEach((v, i) => i === 0 ? ctx.moveTo(v.x, v.y) : ctx.lineTo(v.x, v.y));
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  ctx.beginPath();
+  const half = o.verts.slice(0, Math.ceil(o.verts.length/2) + 1);
+  half.forEach((v, i) => i === 0 ? ctx.moveTo(v.x, v.y) : ctx.lineTo(v.x, v.y));
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawActive(o, alpha) {
+  o.glowPhase = (o.glowPhase || 0) + 0.04;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(o.x, o.y);
+  const glowA = 0.14 + Math.sin(o.glowPhase) * 0.04;
+  ctx.fillStyle = `rgba(95,179,255,${glowA})`;
+  ctx.beginPath(); ctx.arc(0, 0, o.r*1.9, 0, Math.PI*2); ctx.fill();
+  ctx.rotate(o.rot * 0.3);
+  ctx.fillStyle = '#2d4a7c';
+  ctx.fillRect(-o.r*2, -2, o.r*0.9, 4);
+  ctx.fillRect(o.r*1.1, -2, o.r*0.9, 4);
+  ctx.fillStyle = '#cfd9e6';
+  ctx.fillRect(-o.r*0.6, -o.r*0.55, o.r*1.2, o.r*1.1);
+  ctx.fillStyle = '#5fb3ff';
+  ctx.fillRect(-1, -o.r*0.8, 2, 4);
+  ctx.restore();
+}
+
+function drawRare(o, alpha) {
+  o.pulse = (o.pulse || 0) + 0.08;
+  const pulseR = o.r + Math.sin(o.pulse)*3 + 6;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(o.x, o.y);
+  const auraBoost = state.collectMode ? 0.12 : 0;
+  ctx.fillStyle = `rgba(255,200,116,${0.22 + Math.sin(o.pulse)*0.08 + auraBoost})`;
+  ctx.beginPath(); ctx.arc(0, 0, pulseR + (state.collectMode ? 3 : 0), 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,220,160,0.35)';
+  ctx.beginPath(); ctx.arc(0, 0, o.r + 2, 0, Math.PI*2); ctx.fill();
+  ctx.rotate(o.rot);
+  ctx.fillStyle = o.color;
+  ctx.strokeStyle = 'rgba(180,110,30,0.6)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  o.verts.forEach((v, i) => i === 0 ? ctx.moveTo(v.x, v.y) : ctx.lineTo(v.x, v.y));
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawObj(o, alpha = 1) {
+  if (o.type === 'active') drawActive(o, alpha);
+  else if (o.type === 'rare') drawRare(o, alpha);
+  else drawJunk(o, alpha);
+}
+
+/* ---------- ACTION FX ---------- */
+function sliceFx(o) {
+  const ang = Math.random() * Math.PI;
+  const burst = 1.8;
+  const v1 = { vx: Math.cos(ang)*burst + (o.vx||0)*0.6, vy: Math.sin(ang)*burst + (o.vy||0)*0.6 };
+  const v2 = { vx: -Math.cos(ang)*burst + (o.vx||0)*0.6, vy: -Math.sin(ang)*burst + (o.vy||0)*0.6 };
+  state.halves.push({ x:o.x, y:o.y, rot:o.rot, vx:v1.vx, vy:v1.vy, vrot:0.12, verts:makePoly(o.r*0.55), color:o.color, life:45, maxLife:45, type:o.type });
+  state.halves.push({ x:o.x, y:o.y, rot:o.rot, vx:v2.vx, vy:v2.vy, vrot:-0.12, verts:makePoly(o.r*0.55), color:o.color, life:45, maxLife:45, type:o.type });
+  for (let i = 0; i < 14; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const s = 1.2 + Math.random() * 3.5;
+    state.particles.push({ x:o.x, y:o.y, vx:Math.cos(a)*s, vy:Math.sin(a)*s, life:25+Math.random()*20, maxLife:45, color:o.color });
+  }
+  state.flashes.push({ x:o.x, y:o.y, r:4, life:12, maxLife:12, color:'#ffffff' });
+}
+
+function collectFx(o) {
+  state.rings.push({ x:o.x, y:o.y, r:o.r, targetR:o.r*2.8, life:30, maxLife:30, color:'#ffc874' });
+  state.rings.push({ x:o.x, y:o.y, r:o.r*0.5, targetR:o.r*1.6, life:22, maxLife:22, color:'#ffc874' });
+  for (let i = 0; i < 10; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const s = 0.5 + Math.random() * 1.4;
+    state.particles.push({ x:o.x, y:o.y, vx:Math.cos(a)*s, vy:Math.sin(a)*s - 0.4, life:40+Math.random()*15, maxLife:55, color:'#ffe0a8' });
+  }
+}
+
+/* ---------- INPUT ---------- */
+function pos(e) {
+  const r = canvas.getBoundingClientRect();
+  const t = e.touches ? e.touches[0] : (e.changedTouches ? e.changedTouches[0] : e);
+  return {
+    x: (t.clientX - r.left) * (W / r.width),
+    y: (t.clientY - r.top) * (H / r.height),
+  };
+}
+
+function addTrail(x, y) {
+  state.trail.push({ x, y, life: 14 });
+  if (state.trail.length > 22) state.trail.shift();
+}
+
+function checkSliceHits() {
+  if (state.screen !== 'playing') return;
+  if (state.trail.length < 2) return;
+  const p1 = state.trail[state.trail.length - 2];
+  const p2 = state.trail[state.trail.length - 1];
+  const dx = p2.x - p1.x, dy = p2.y - p1.y;
+  if (dx*dx + dy*dy < 6) return;
+
+  for (let i = state.objs.length - 1; i >= 0; i--) {
+    const o = state.objs[i];
+    const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+    const ddx = o.x - mx, ddy = o.y - my;
+    const hit = (o.r + CONFIG.hitRadiusBuffer) ** 2;
+    if (ddx*ddx + ddy*ddy >= hit) continue;
+
+    sliceFx(o);
+    state.objs.splice(i, 1);
+
+    if (o.type === 'junk') {
+      state.score += CONFIG.score.sliceJunk;
+      state.cleared++;
+      state.labels.push({ x:o.x, y:o.y - 18, text:o.label, life:45, maxLife:45, color:'#9fd6f5' });
+      Audio.playSlice();
+    } else if (o.type === 'active') {
+      state.score += CONFIG.score.sliceActive;
+      state.destroyed++;
+      state.screenFlash = 20;
+      state.labels.push({ x:o.x, y:o.y - 18, text: o.label + ' DESTROYED', life:60, maxLife:60, color:'#ff7a7a' });
+      state.labels.push({ x:o.x, y:o.y + 2, text: '−25 / infrastructure damaged', life:55, maxLife:55, color:'#ff5a5a' });
+      state.flashes.push({ x:o.x, y:o.y, r:5, life:20, maxLife:20, color:'#ff5050' });
+      Audio.playActiveHit();
+    } else {
+      state.score += CONFIG.score.sliceRare;
+      state.labels.push({ x:o.x, y:o.y - 18, text: o.label + ' lost', life:55, maxLife:55, color:'#ffb070' });
+      Audio.playSlice();
+    }
+    updateHUD();
+  }
+}
+
+function handleTap(x, y) {
+  if (state.screen !== 'playing') return;
+  for (let i = state.objs.length - 1; i >= 0; i--) {
+    const o = state.objs[i];
+    const ddx = o.x - x, ddy = o.y - y;
+    const hit = (o.r + 16) ** 2;
+    if (ddx*ddx + ddy*ddy >= hit) continue;
+    if (o.type === 'rare') {
+      collectFx(o);
+      state.objs.splice(i, 1);
+      state.score += CONFIG.score.tapRare;
+      state.collected++;
+      state.labels.push({ x:o.x, y:o.y - 18, text:o.label, life:65, maxLife:65, color:'#ffe0a8' });
+      state.labels.push({ x:o.x, y:o.y + 2, text:'+100 preserved', life:60, maxLife:60, color:'#ffd080' });
+      Audio.playCollect();
+      updateHUD();
+      return;
+    }
+  }
+}
+
+canvas.addEventListener('mousemove', e => {
+  if (state.collectMode) return;
+  const p = pos(e);
+  addTrail(p.x, p.y);
+  checkSliceHits();
+});
+canvas.addEventListener('mouseleave', () => { state.trail.length = 0; });
+canvas.addEventListener('mousedown', e => {
+  const p = pos(e);
+  if (state.collectMode) handleTap(p.x, p.y);
+});
+
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const p = pos(e);
+  state.pressStart = { x: p.x, y: p.y, time: Date.now() };
+}, { passive: false });
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  const p = pos(e);
+  addTrail(p.x, p.y);
+  checkSliceHits();
+}, { passive: false });
+canvas.addEventListener('touchend', e => {
+  e.preventDefault();
+  if (!state.pressStart) { state.trail.length = 0; return; }
+  const p = pos(e);
+  const dt = Date.now() - state.pressStart.time;
+  const dx = p.x - state.pressStart.x;
+  const dy = p.y - state.pressStart.y;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  if (dt < CONFIG.tap.maxDurationMs && dist < CONFIG.tap.maxDistancePx) handleTap(p.x, p.y);
+  state.pressStart = null;
+  state.trail.length = 0;
+}, { passive: false });
+
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && !e.repeat) {
+    e.preventDefault();
+    state.collectMode = true;
+    canvas.style.cursor = 'pointer';
+    state.trail.length = 0;
+  }
+});
+document.addEventListener('keyup', e => {
+  if (e.code === 'Space') {
+    e.preventDefault();
+    state.collectMode = false;
+    canvas.style.cursor = 'crosshair';
+  }
+});
+window.addEventListener('blur', () => {
+  state.collectMode = false;
+  canvas.style.cursor = 'crosshair';
+});
+
+/* ---------- HUD ---------- */
+function updateHUD() {
+  const lv = currentLevel();
+  if (!lv) return;
+  document.getElementById('hud-level').textContent = 'Lv ' + lv.id;
+  document.getElementById('hud-time').textContent = state.timeRemaining;
+  document.getElementById('hud-score').textContent = state.score;
+  document.getElementById('hud-threshold').textContent = lv.passScore;
+  document.getElementById('hud-missed').textContent = state.missed;
+  document.getElementById('hud-misslimit').textContent = lv.hardFails.missed || '—';
+  const satsBlock = document.getElementById('hud-sats-block');
+  if (lv.hardFails.destroyed) {
+    satsBlock.style.display = '';
+    document.getElementById('hud-destroyed').textContent = state.destroyed;
+    document.getElementById('hud-destroylimit').textContent = lv.hardFails.destroyed;
+  } else {
+    satsBlock.style.display = 'none';
+  }
+}
+
+/* ---------- STATE MACHINE / SCREENS ---------- */
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('hud').classList.remove('active');
+  if (name === 'menu') document.getElementById('screen-menu').classList.add('active');
+  else if (name === 'intro') document.getElementById('screen-intro').classList.add('active');
+  else if (name === 'outro') document.getElementById('screen-outro').classList.add('active');
+  else if (name === 'complete') document.getElementById('screen-complete').classList.add('active');
+  else if (name === 'playing') document.getElementById('hud').classList.add('active');
+  state.screen = name;
+}
+
+function renderIntro() {
+  const lv = currentLevel();
+  const el = document.getElementById('screen-intro');
+  let html = `
+    <div class="era">${lv.era}</div>
+    <h1>${lv.title}</h1>
+    <p class="backstory">${lv.backstory}</p>
+  `;
+  lv.tutorials.forEach(t => {
+    html += `<div class="tutorial-card"><h3>${t.title}</h3><p>${t.body}</p></div>`;
+  });
+  html += `<button class="primary" id="btn-begin">Begin</button>`;
+  el.innerHTML = html;
+  document.getElementById('btn-begin').addEventListener('click', () => {
+    Audio.init();
+    Audio.playClick();
+    startLevel();
+  });
+}
+
+function renderOutro() {
+  const lv = currentLevel();
+  const el = document.getElementById('screen-outro');
+  const resultClass = state.resultSuccess ? 'success' : 'failure';
+  const resultText = state.resultSuccess ? 'Level passed' : 'Level failed';
+  const failReasonHtml = (!state.resultSuccess && state.failReason)
+    ? `<div class="fail-reason">${state.failReason}</div>` : '';
+  const scoreClass = state.resultSuccess ? 'score-pass' : 'score-fail';
+
+  let buttonHtml = '';
+  if (state.resultSuccess) {
+    const isLast = state.currentLevelIdx >= LEVELS.length - 1;
+    buttonHtml = `<button class="primary" id="btn-next">${isLast ? 'Continue' : 'Next level'}</button>`;
+  } else {
+    buttonHtml = `<button class="primary" id="btn-retry">Retry</button>`;
+  }
+  buttonHtml += `<button class="secondary" id="btn-back-menu">Back to menu</button>`;
+
+  el.innerHTML = `
+    <div class="outro-result ${resultClass}">${resultText}</div>
+    <h1>${lv.title}</h1>
+    ${failReasonHtml}
+    <div class="score-display ${scoreClass}">
+      <div class="score-main">${state.score} <span class="score-divider">/</span> ${lv.passScore}</div>
+      <div class="score-label">your score · required to pass</div>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><span class="stat-value">${state.cleared}</span><span class="stat-label">Cleared</span></div>
+      <div class="stat"><span class="stat-value">${state.collected}</span><span class="stat-label">Collected</span></div>
+      <div class="stat"><span class="stat-value">${state.missed}</span><span class="stat-label">Missed</span></div>
+      ${lv.hardFails.destroyed ? `<div class="stat"><span class="stat-value">${state.destroyed}</span><span class="stat-label">Sats hit</span></div>` : ''}
+    </div>
+    <div class="fact-card">
+      <h3>From the catalog</h3>
+      <p>${lv.outroFact}</p>
+    </div>
+    ${buttonHtml}
+  `;
+
+  if (state.resultSuccess) {
+    document.getElementById('btn-next').addEventListener('click', () => {
+      Audio.playClick();
+      const isLast = state.currentLevelIdx >= LEVELS.length - 1;
+      if (isLast) {
+        showScreen('complete');
+      } else {
+        state.currentLevelIdx++;
+        renderIntro();
+        showScreen('intro');
+      }
+    });
+  } else {
+    document.getElementById('btn-retry').addEventListener('click', () => {
+      Audio.playClick();
+      renderIntro();
+      showScreen('intro');
+    });
+  }
+  document.getElementById('btn-back-menu').addEventListener('click', () => {
+    Audio.playClick();
+    state.currentLevelIdx = 0;
+    showScreen('menu');
+  });
+}
+
+/* ---------- LEVEL LIFECYCLE ---------- */
+function resetGameplayState() {
+  state.objs.length = 0;
+  state.halves.length = 0;
+  state.particles.length = 0;
+  state.labels.length = 0;
+  state.flashes.length = 0;
+  state.trail.length = 0;
+  state.rings.length = 0;
+  state.score = 0;
+  state.cleared = 0;
+  state.missed = 0;
+  state.collected = 0;
+  state.destroyed = 0;
+  state.screenFlash = 0;
+  state.junkTimer = 0;
+  state.activeTimer = 60;
+  state.rareTimer = 120;
+}
+
+function startLevel() {
+  resetGameplayState();
+  const lv = currentLevel();
+  state.levelStartMs = Date.now();
+  state.timeRemaining = lv.duration;
+  updateHUD();
+  showScreen('playing');
+}
+
+function endLevel(success, failReason) {
+  state.resultSuccess = success;
+  state.failReason = failReason || null;
+  if (success) Audio.playLevelWin(); else Audio.playLevelLose();
+  renderOutro();
+  showScreen('outro');
+}
+
+function checkWinLossConditions() {
+  const lv = currentLevel();
+  if (lv.hardFails.missed && state.missed >= lv.hardFails.missed) {
+    endLevel(false, 'too many pieces missed — gross inattention');
+    return;
+  }
+  if (lv.hardFails.destroyed && state.destroyed >= lv.hardFails.destroyed) {
+    endLevel(false, 'too many active satellites destroyed');
+    return;
+  }
+  if (state.score >= lv.passScore) {
+    endLevel(true);
+    return;
+  }
+  if (state.timeRemaining <= 0) {
+    endLevel(false, 'time ran out before reaching the score threshold');
+  }
+}
+
+/* ---------- TRAIL DRAWING ---------- */
+function drawTrail() {
+  if (state.trail.length < 2) return;
+  for (let i = 1; i < state.trail.length; i++) {
+    const p1 = state.trail[i-1], p2 = state.trail[i];
+    const a = (i / state.trail.length) * (p1.life / 14);
+    ctx.strokeStyle = `rgba(200,230,255,${a * 0.85})`;
+    ctx.lineWidth = i * 0.45 + 0.5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.stroke();
+  }
+}
+
+/* ---------- GAME LOOP ---------- */
+function loop() {
+  ctx.fillStyle = '#08080c';
+  ctx.fillRect(0, 0, W, H);
+  stars.forEach(s => {
+    ctx.fillStyle = `rgba(255,255,255,${s.a})`;
+    ctx.fillRect(s.x, s.y, s.r, s.r);
+  });
+
+  if (state.screenFlash > 0) {
+    ctx.fillStyle = `rgba(255,40,40,${(state.screenFlash / 20) * 0.15})`;
+    ctx.fillRect(0, 0, W, H);
+    state.screenFlash--;
+  }
+
+  if (state.screen === 'playing') {
+    const lv = currentLevel();
+    const elapsedSec = Math.floor((Date.now() - state.levelStartMs) / 1000);
+    state.timeRemaining = Math.max(0, lv.duration - elapsedSec);
+    updateHUD();
+
+    state.junkTimer++; state.activeTimer++; state.rareTimer++;
+    if (lv.spawn.junk > 0 && state.junkTimer > lv.spawn.junk) { spawnJunk(); state.junkTimer = 0; }
+    if (lv.spawn.active > 0 && state.activeTimer > lv.spawn.active) { spawnActive(); state.activeTimer = 0; }
+    if (lv.spawn.rare > 0 && state.rareTimer > lv.spawn.rare) { spawnRare(); state.rareTimer = 0; }
+  }
+
+  for (let i = state.objs.length - 1; i >= 0; i--) {
+    const o = state.objs[i];
+    if (state.screen === 'playing') {
+      if (o.type === 'junk') {
+        o.x += o.vx; o.y += o.vy; o.vy += 0.18; o.rot += o.vrot;
+      } else if (o.type === 'active') {
+        o.x += o.direction * o.speed;
+        const span = Math.abs(o.xEnd - o.xStart);
+        const progress = Math.max(0, Math.min(1, Math.abs(o.x - o.xStart) / span));
+        o.y = o.yBaseline - o.arcHeight * Math.sin(progress * Math.PI);
+        o.rot += o.vrot;
+      } else {
+        o.x += o.vx;
+        o.bobPhase += 0.03;
+        o.y = o.baseY + Math.sin(o.bobPhase) * 8;
+        o.rot += o.vrot;
+      }
+    }
+    drawObj(o, 1);
+    if (state.screen === 'playing') {
+      if (o.type === 'junk' && o.y > H + 60) {
+        state.objs.splice(i, 1);
+        state.missed++;
+        state.score -= 5;
+        updateHUD();
+      } else if (o.type !== 'junk' && (o.x < -60 || o.x > W + 60)) {
+        state.objs.splice(i, 1);
+      }
+    }
+  }
+
+  for (let i = state.halves.length - 1; i >= 0; i--) {
+    const h = state.halves[i];
+    h.x += h.vx; h.y += h.vy; h.vy += 0.18; h.rot += h.vrot; h.life--;
+    drawObj(h, Math.max(0, h.life / h.maxLife));
+    if (h.life <= 0) state.halves.splice(i, 1);
+  }
+
+  for (let i = state.particles.length - 1; i >= 0; i--) {
+    const p = state.particles[i];
+    p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.life--;
+    ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x - 1, p.y - 1, 2, 2);
+    ctx.globalAlpha = 1;
+    if (p.life <= 0) state.particles.splice(i, 1);
+  }
+
+  for (let i = state.flashes.length - 1; i >= 0; i--) {
+    const f = state.flashes[i];
+    f.r += 2.5; f.life--;
+    ctx.globalAlpha = Math.max(0, f.life / f.maxLife) * 0.5;
+    ctx.strokeStyle = f.color || '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    if (f.life <= 0) state.flashes.splice(i, 1);
+  }
+
+  for (let i = state.rings.length - 1; i >= 0; i--) {
+    const ring = state.rings[i];
+    ring.life--;
+    const t = 1 - (ring.life / ring.maxLife);
+    const r = ring.r + (ring.targetR - ring.r) * t;
+    ctx.globalAlpha = Math.max(0, ring.life / ring.maxLife) * 0.85;
+    ctx.strokeStyle = ring.color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(ring.x, ring.y, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    if (ring.life <= 0) state.rings.splice(i, 1);
+  }
+
+  for (let i = state.labels.length - 1; i >= 0; i--) {
+    const l = state.labels[i];
+    l.y -= 0.5; l.life--;
+    ctx.globalAlpha = Math.max(0, l.life / l.maxLife);
+    ctx.font = '11px ui-monospace, "SF Mono", Menlo, monospace';
+    ctx.fillStyle = l.color || '#9fd6f5';
+    ctx.textAlign = 'center';
+    ctx.fillText(l.text, l.x, l.y);
+    ctx.globalAlpha = 1;
+    if (l.life <= 0) state.labels.splice(i, 1);
+  }
+
+  for (let i = state.trail.length - 1; i >= 0; i--) {
+    state.trail[i].life--;
+    if (state.trail[i].life <= 0) state.trail.splice(i, 1);
+  }
+  if (!state.collectMode && state.screen === 'playing') drawTrail();
+
+  if (state.collectMode && state.screen === 'playing') {
+    ctx.strokeStyle = 'rgba(255,200,116,0.4)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, W - 2, H - 2);
+    ctx.font = '11px ui-monospace, "SF Mono", Menlo, monospace';
+    ctx.fillStyle = 'rgba(255,200,116,0.85)';
+    ctx.textAlign = 'center';
+    ctx.fillText('COLLECT MODE — click gold pulses', W / 2, 50);
+  }
+
+  if (state.screen === 'playing') checkWinLossConditions();
+
+  requestAnimationFrame(loop);
+}
+
+/* ---------- INIT ---------- */
+document.getElementById('btn-start').addEventListener('click', () => {
+  Audio.init();
+  Audio.playClick();
+  state.currentLevelIdx = 0;
+  renderIntro();
+  showScreen('intro');
+});
+
+document.getElementById('btn-menu').addEventListener('click', () => {
+  Audio.playClick();
+  state.currentLevelIdx = 0;
+  showScreen('menu');
+});
+
+document.getElementById('mute-btn').addEventListener('click', () => {
+  Audio.init();
+  Audio.setMuted(!Audio.isMuted());
+  document.getElementById('mute-btn').textContent = 'Sound: ' + (Audio.isMuted() ? 'off' : 'on');
+});
+
+loop();
+</script>
+</body>
+</html>
