@@ -16,6 +16,19 @@ export default function GameCanvas({ levelIdx, onLevelEnd }: Props) {
   const engineRef = useRef<ReturnType<typeof createEngine> | null>(null);
   const { syncFromEngine, isMuted } = useGameStore();
 
+  // Keep canvas pixel buffer in sync with display size × device pixel ratio.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const observer = new ResizeObserver(() => {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width  = Math.round(canvas.clientWidth  * dpr);
+      canvas.height = Math.round(canvas.clientHeight * dpr);
+    });
+    observer.observe(canvas);
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;

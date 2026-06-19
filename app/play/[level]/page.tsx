@@ -117,11 +117,11 @@ export default function PlayPage({ params }: Props) {
               <span className={styles.pillLabel}>STATUS</span>
               <span className={styles.pillValue}>{statusLevel.toUpperCase()}</span>
             </div>
-            <div className={styles.pill}>
+            <div className={`${styles.pill} ${styles.pillSecondary}`}>
               <span className={styles.pillLabel}>ALT</span>
               <span className={styles.pillValue}>487 km</span>
             </div>
-            <div className={styles.pill}>
+            <div className={`${styles.pill} ${styles.pillSecondary}`}>
               <span className={styles.pillLabel}>INC</span>
               <span className={styles.pillValue}>51.6°</span>
             </div>
@@ -164,7 +164,12 @@ export default function PlayPage({ params }: Props) {
       </div>
 
       <div className={styles.help}>
-        move to slice gray junk &nbsp;·&nbsp; hold <kbd>SPACE</kbd> + click (or tap on mobile) gold pulses to collect &nbsp;·&nbsp; avoid blue satellites
+        <span className={styles.helpDesktop}>
+          move to slice gray junk &nbsp;·&nbsp; hold <kbd>SPACE</kbd> + click gold pulses to collect &nbsp;·&nbsp; avoid blue satellites
+        </span>
+        <span className={styles.helpMobile}>
+          swipe to slice gray junk &nbsp;·&nbsp; tap gold pulses to collect &nbsp;·&nbsp; avoid blue satellites
+        </span>
       </div>
     </div>
   );

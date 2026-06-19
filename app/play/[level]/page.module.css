@@ -1,5 +1,6 @@
 .app {
   height: 100%;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -8,9 +9,15 @@
   gap: 12px;
 }
 
+@media (max-width: 480px) {
+  .app {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+}
+
 .titleBar {
   width: 100%;
-  max-width: 720px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -19,6 +26,7 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .titleLeft {
@@ -65,8 +73,9 @@
 
 .canvasWrap {
   position: relative;
+  flex: 1;
+  min-height: 0;
   width: 100%;
-  max-width: 720px;
   aspect-ratio: 680 / 460;
 }
 
@@ -119,6 +128,23 @@
   color: #8a9ab0;
 }
 
+@media (max-width: 480px) {
+  .pill {
+    padding: 3px 7px;
+    gap: 4px;
+  }
+}
+
+.pillSecondary {
+  /* ALT / INC pills — hidden on small screens */
+}
+
+@media (max-width: 400px) {
+  .pillSecondary {
+    display: none;
+  }
+}
+
 .pillLabel { color: #5a6470; }
 .pillValue { color: #cde0f5; font-weight: 500; }
 
@@ -163,6 +189,12 @@
 .trackValue { color: #cde0f5; }
 .signature { color: #5a6470; }
 
+@media (max-width: 480px) {
+  .hudBottom {
+    display: none;
+  }
+}
+
 /* Complete screen */
 .completeScreen {
   position: absolute;
@@ -187,7 +219,7 @@
 }
 
 .completeTitle {
-  font-size: 30px;
+  font-size: clamp(20px, 5vw, 30px);
   font-weight: 500;
   color: #f0f0f5;
   margin-bottom: 16px;
@@ -217,7 +249,6 @@
 
 .help {
   width: 100%;
-  max-width: 720px;
   font-size: 11px;
   color: #5a5a65;
   line-height: 1.6;
@@ -232,4 +263,21 @@
   font-family: inherit;
   font-size: 10px;
   color: #d4d4dc;
+}
+
+.helpDesktop {
+  /* keyboard-specific hint — hidden on touch devices */
+}
+
+.helpMobile {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .helpDesktop {
+    display: none;
+  }
+  .helpMobile {
+    display: inline;
+  }
 }

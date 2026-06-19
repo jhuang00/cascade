@@ -363,6 +363,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
   function loop(): void {
     frameCount++;
     ctx.save();
+    ctx.scale(canvas.width / W, canvas.height / H);
     if (gs.shake > 0) {
       ctx.translate((Math.random() - 0.5) * gs.shake, (Math.random() - 0.5) * gs.shake);
       gs.shake *= 0.85;

@@ -9,6 +9,7 @@
 html,
 body {
   height: 100%;
+  height: 100dvh;
   background: #050508;
   color: #d4d4dc;
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;

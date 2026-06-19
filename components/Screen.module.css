@@ -7,7 +7,7 @@
   justify-content: center;
   background: rgba(6, 6, 10, 0.92);
   color: #d4d4dc;
-  padding: 32px;
+  padding: clamp(14px, 4vw, 32px);
   text-align: center;
   border-radius: 12px;
   overflow-y: auto;
@@ -23,7 +23,7 @@
 }
 
 .title {
-  font-size: 30px;
+  font-size: clamp(20px, 5vw, 30px);
   font-weight: 500;
   letter-spacing: 0.01em;
   margin-bottom: 12px;
@@ -110,7 +110,7 @@
 .scoreAlt { border-color: #ffc874; }
 
 .scoreMain {
-  font-size: 32px;
+  font-size: clamp(22px, 7vw, 32px);
   font-weight: 500;
   color: #f0f0f5;
   letter-spacing: 0.02em;
@@ -167,9 +167,10 @@
   background: rgba(30, 30, 38, 0.7);
   border-left: 2px solid #ffc874;
   border-radius: 4px;
-  padding: 14px 20px;
+  padding: clamp(10px, 3vw, 14px) clamp(12px, 4vw, 20px);
   margin: 16px 0;
   max-width: 480px;
+  width: 100%;
   text-align: left;
 }
 
