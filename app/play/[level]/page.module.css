@@ -211,6 +211,8 @@
 }
 
 .completeEra {
+  font-family: var(--font-display);
+  font-weight: 300;
   font-size: 11px;
   color: #6c6c7a;
   letter-spacing: 0.2em;
@@ -219,13 +221,16 @@
 }
 
 .completeTitle {
+  font-family: var(--font-display);
+  font-weight: 600;
   font-size: clamp(20px, 5vw, 30px);
-  font-weight: 500;
   color: #f0f0f5;
   margin-bottom: 16px;
 }
 
 .completeBody {
+  font-family: var(--font-display);
+  font-weight: 400;
   max-width: 460px;
   font-size: 14px;
   line-height: 1.7;
@@ -234,13 +239,14 @@
 }
 
 .completeBtn {
+  font-family: var(--font-display);
+  font-weight: 500;
   background: #5fb3ff;
   color: #08080c;
   border: none;
   padding: 11px 32px;
   border-radius: 6px;
   font-size: 13px;
-  font-weight: 500;
   cursor: pointer;
   letter-spacing: 0.05em;
 }

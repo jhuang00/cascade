@@ -1,10 +1,11 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { loadProgress } from '@/lib/progress';
 import * as Audio from '@/lib/audio';
 import { LEVELS } from '@/data/levels';
 import { useGameStore } from '@/store/gameStore';
+import { createStarLayers, createNebulae, createEarth, createOrbitArcs, drawBackground } from '@/lib/background';
 import styles from './page.module.css';
 
 export default function MenuPage() {
@@ -13,11 +14,50 @@ export default function MenuPage() {
   const [unlockedLevel, setUnlockedLevel] = useState(1);
   const [bestScores, setBestScores] = useState<Record<number, number>>({});
   const [muted, setMuted] = useState(false);
+  const bgCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const p = loadProgress();
     setUnlockedLevel(p.unlockedLevel);
     setBestScores(p.bestScores);
+  }, []);
+
+  // Animated background canvas
+  useEffect(() => {
+    const canvas = bgCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const W = 680, H = 460;
+    const stars = createStarLayers(W, H);
+    const nebulae = createNebulae(W, H);
+    const earth = createEarth(W, H);
+    const orbitArcs = createOrbitArcs(W, H);
+
+    const syncSize = () => {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.round(canvas.clientWidth * dpr);
+      canvas.height = Math.round(canvas.clientHeight * dpr);
+    };
+    const observer = new ResizeObserver(syncSize);
+    observer.observe(canvas);
+    syncSize();
+
+    let rafId: number;
+    function loop() {
+      ctx!.save();
+      ctx!.scale(canvas!.width / W, canvas!.height / H);
+      drawBackground(ctx!, W, H, stars, nebulae, earth, orbitArcs);
+      ctx!.restore();
+      rafId = requestAnimationFrame(loop);
+    }
+    rafId = requestAnimationFrame(loop);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      observer.disconnect();
+    };
   }, []);
 
   function handleStart() {
@@ -55,6 +95,7 @@ export default function MenuPage() {
       </div>
 
       <div className={styles.canvasWrap}>
+        <canvas ref={bgCanvasRef} className={styles.bgCanvas} />
         <div className={styles.menuScreen}>
           <div className={styles.era}>A web game by JH</div>
           <h1 className={styles.gameTitle}>Cascade</h1>

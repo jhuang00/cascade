@@ -1,4 +1,5 @@
 'use client';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { LEVELS } from '@/data/levels';
@@ -10,12 +11,31 @@ interface Props {
   onRetry: () => void;
 }
 
+const COUNT_DURATION_MS = 900;
+
 export default function LevelOutro({ onRetry }: Props) {
   const router = useRouter();
   const {
     screen, currentLevelIdx, score, cleared, missed, collected, destroyed,
     resultSuccess, failReason, l3Result, fy1cSaved, setScreen,
   } = useGameStore();
+  const [displayScore, setDisplayScore] = useState(0);
+
+  useEffect(() => {
+    if (screen !== 'outro') return;
+    setDisplayScore(0);
+    const start = performance.now();
+    const target = score;
+    let rafId: number;
+    function tick(now: number) {
+      const t = Math.min(1, (now - start) / COUNT_DURATION_MS);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplayScore(Math.round(eased * target));
+      if (t < 1) rafId = requestAnimationFrame(tick);
+    }
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [screen, score]);
 
   if (screen !== 'outro') return null;
 
@@ -79,7 +99,7 @@ export default function LevelOutro({ onRetry }: Props) {
 
       <div className={`${styles.scoreDisplay} ${scoreClass}`}>
         <div className={styles.scoreMain}>
-          {score} <span className={styles.scoreDivider}>/</span> {lv.passScore}
+          {displayScore} <span className={styles.scoreDivider}>/</span> {lv.passScore}
         </div>
         <div className={styles.scoreLabel}>your score · required to pass</div>
       </div>
