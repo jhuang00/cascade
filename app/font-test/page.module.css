@@ -1,0 +1,341 @@
+.page {
+  min-height: 100dvh;
+  background: #02030a;
+  color: #d4d4dc;
+  padding: 40px 32px 80px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  overflow-y: auto;
+}
+
+/* ── Header ── */
+.header {
+  max-width: 900px;
+  margin: 0 auto 48px;
+  border-bottom: 1px solid #1e1e26;
+  padding-bottom: 32px;
+}
+
+.headerLabel {
+  font-size: 10px;
+  color: #5a6470;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.headerTitle {
+  font-size: 22px;
+  font-weight: 500;
+  color: #f0f0f5;
+  margin-bottom: 12px;
+  letter-spacing: 0.01em;
+}
+
+.headerBody {
+  font-size: 13px;
+  color: #8a9ab0;
+  line-height: 1.7;
+  max-width: 620px;
+  margin-bottom: 24px;
+}
+
+.code {
+  background: #14141c;
+  border: 1px solid #2a2a34;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 11px;
+  color: #5fb3ff;
+}
+
+.twoFontNote {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.twoFontRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.twoFontChip {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  min-width: 110px;
+  text-align: center;
+}
+
+.twoFontChip[data-role='display'] {
+  background: rgba(95, 179, 255, 0.12);
+  border: 1px solid rgba(95, 179, 255, 0.3);
+  color: #5fb3ff;
+}
+
+.twoFontChip[data-role='mono'] {
+  background: rgba(255, 200, 116, 0.10);
+  border: 1px solid rgba(255, 200, 116, 0.25);
+  color: #ffc874;
+}
+
+.twoFontDesc {
+  color: #6a7a8a;
+}
+
+/* ── Grid ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+  max-width: 1680px;
+  margin: 0 auto 64px;
+}
+
+/* ── Card ── */
+.card {
+  background: #07080f;
+  border: 1px solid #1a1a24;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.15s;
+}
+
+.card[data-current='true'] {
+  border-color: #ffc87440;
+}
+
+.card:hover {
+  border-color: #2a2a38;
+}
+
+.cardMeta {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 16px 18px 4px;
+}
+
+.cardName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f0f0f5;
+}
+
+.cardTag {
+  font-size: 10px;
+  color: #5a6470;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.cardNote {
+  font-size: 11px;
+  color: #6a7a8a;
+  line-height: 1.6;
+  padding: 0 18px 16px;
+  margin: 0;
+}
+
+/* ── Intro mock ── */
+.introMock {
+  background: rgba(2, 3, 10, 0.85);
+  border-top: 1px solid #12121a;
+  border-bottom: 1px solid #12121a;
+  padding: 24px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1;
+}
+
+.era {
+  font-size: 10px;
+  color: #6c6c7a;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.title {
+  font-size: 26px;
+  font-weight: 500;
+  color: #f0f0f5;
+  letter-spacing: 0.01em;
+  margin: 0 0 12px;
+  line-height: 1.15;
+}
+
+.backstory {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #b0b0b8;
+  margin: 0 0 16px;
+}
+
+.tutorialCard {
+  background: rgba(30, 30, 40, 0.7);
+  border-left: 2px solid rgba(95, 179, 255, 0.35);
+  border-radius: 3px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+
+.tutorialTitle {
+  font-size: 11px;
+  color: #5fb3ff;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.tutorialBody {
+  font-size: 11px;
+  color: #8a9ab0;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.hudSample {
+  font-size: 10px;
+  color: #5a6470;
+  letter-spacing: 0.1em;
+  background: rgba(6, 6, 10, 0.6);
+  border: 1px solid rgba(60, 60, 72, 0.4);
+  border-radius: 3px;
+  padding: 5px 10px;
+  margin-bottom: 8px;
+}
+
+.catalogLabel {
+  font-size: 10px;
+  color: #9fd6f5;
+  letter-spacing: 0.08em;
+  border: 1px solid rgba(95, 179, 255, 0.25);
+  border-radius: 2px;
+  padding: 3px 8px;
+  display: inline-block;
+  margin-bottom: 16px;
+  align-self: flex-start;
+}
+
+.beginBtn {
+  background: #5fb3ff;
+  color: #08080c;
+  border: none;
+  padding: 10px 28px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  align-self: flex-start;
+}
+
+/* ── Specimen ── */
+.specimenSection {
+  padding: 16px 18px 20px;
+  border-top: 1px solid #10101a;
+}
+
+.specimenLabel {
+  font-size: 9px;
+  color: #3a3a48;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.specimenText {
+  font-size: 32px;
+  font-weight: 600;
+  color: #3a4a5a;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+  margin-bottom: 10px;
+}
+
+.specimenAlpha {
+  font-size: 11px;
+  color: #2a3a4a;
+  line-height: 1.8;
+  letter-spacing: 0.04em;
+}
+
+/* ── Pairing section ── */
+.pairingSection {
+  max-width: 900px;
+  margin: 0 auto;
+  padding-top: 48px;
+  border-top: 1px solid #1a1a24;
+}
+
+.pairingGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.pairingCard {
+  background: #07080f;
+  border: 1px solid #1a1a24;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.pairingHeading {
+  font-size: 18px;
+  font-weight: 600;
+  color: #f0f0f5;
+  margin-bottom: 14px;
+  letter-spacing: 0.01em;
+}
+
+.pairingStack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pairingRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pairingRoleChip {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  min-width: 52px;
+  text-align: center;
+}
+
+.pairingRoleChip[data-role='display'] {
+  background: rgba(95, 179, 255, 0.10);
+  border: 1px solid rgba(95, 179, 255, 0.25);
+  color: #5fb3ff;
+}
+
+.pairingRoleChip[data-role='mono'] {
+  background: rgba(255, 200, 116, 0.08);
+  border: 1px solid rgba(255, 200, 116, 0.2);
+  color: #ffc874;
+}
+
+.pairingExample {
+  font-size: 11px;
+  color: #6a7a8a;
+}

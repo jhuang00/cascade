@@ -1,6 +1,6 @@
 import type { EngineGameState, GameDisplayState, GameObject } from '@/lib/types';
 import { LEVELS } from '@/data/levels';
-import { createStarLayers, createNebulae, createEarth, drawBackground } from '@/lib/background';
+import { createStarLayers, createNebulae, createEarth, createOrbitArcs, drawBackground } from '@/lib/background';
 import { spawnJunk, spawnActive, spawnRare } from '@/lib/spawn';
 import { drawObj, drawCatalogLabel } from '@/lib/render';
 import { sliceFx, collectFx, reentryBurnupFx } from '@/lib/fx';
@@ -37,6 +37,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
   const stars = createStarLayers(W, H);
   const nebulae = createNebulae(W, H);
   const earth = createEarth(W, H);
+  const orbitArcs = createOrbitArcs(W, H);
   const l3 = createL3Manager();
 
   let gs = makeEngineGameState();
@@ -321,17 +322,39 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
       if (gs.trail[i].life <= 0) gs.trail.splice(i, 1);
     }
     if (gs.collectMode || gs.trail.length < 2) return;
+
+    // Glow pass — wide, soft outer halo
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
     for (let i = 1; i < gs.trail.length; i++) {
       const p1 = gs.trail[i - 1], p2 = gs.trail[i];
-      const a = (i / gs.trail.length) * (p1.life / 14);
-      ctx.strokeStyle = `rgba(180,220,255,${a * 0.9})`;
-      ctx.lineWidth = i * 0.45 + 0.5;
-      ctx.lineCap = 'round';
+      const t = i / gs.trail.length;
+      const a = t * (p1.life / 14) * 0.35;
+      ctx.strokeStyle = `rgba(120,190,255,${a})`;
+      ctx.lineWidth = i * 1.4 + 3;
+      ctx.shadowColor = 'rgba(95,179,255,0.5)';
+      ctx.shadowBlur = 8;
       ctx.beginPath();
       ctx.moveTo(p1.x, p1.y);
       ctx.lineTo(p2.x, p2.y);
       ctx.stroke();
     }
+    ctx.shadowBlur = 0;
+
+    // Core pass — bright sharp line
+    for (let i = 1; i < gs.trail.length; i++) {
+      const p1 = gs.trail[i - 1], p2 = gs.trail[i];
+      const t = i / gs.trail.length;
+      const a = t * (p1.life / 14);
+      ctx.strokeStyle = `rgba(210,235,255,${a * 0.95})`;
+      ctx.lineWidth = i * 0.5 + 0.8;
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   function renderCollectMode(): void {
@@ -350,6 +373,16 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
     );
   }
 
+  function renderScanLines(): void {
+    ctx.save();
+    ctx.globalAlpha = 0.032;
+    ctx.fillStyle = '#000000';
+    for (let y = 0; y < H; y += 4) {
+      ctx.fillRect(0, y, W, 1.5);
+    }
+    ctx.restore();
+  }
+
   function renderScreenFlash(): void {
     if (gs.screenFlash <= 0) return;
     ctx.fillStyle = `rgba(255,40,40,${(gs.screenFlash / 20) * 0.15})`;
@@ -363,13 +396,14 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
   function loop(): void {
     frameCount++;
     ctx.save();
+    ctx.scale(canvas.width / W, canvas.height / H);
     if (gs.shake > 0) {
       ctx.translate((Math.random() - 0.5) * gs.shake, (Math.random() - 0.5) * gs.shake);
       gs.shake *= 0.85;
       if (gs.shake < 0.4) gs.shake = 0;
     }
 
-    drawBackground(ctx, W, H, stars, nebulae, earth);
+    drawBackground(ctx, W, H, stars, nebulae, earth, orbitArcs);
     renderScreenFlash();
 
     if (gs.playing) {
@@ -397,6 +431,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
       renderTrail();
     }
 
+    renderScanLines();
     ctx.restore();
     rafId = requestAnimationFrame(loop);
   }

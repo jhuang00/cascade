@@ -10,12 +10,13 @@
 }
 
 .title {
+  font-family: var(--font-display);
+  font-weight: 500;
   font-size: 11px;
   color: #ffc874;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   margin-bottom: 8px;
-  font-weight: 500;
 }
 
 .body {

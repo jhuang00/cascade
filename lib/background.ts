@@ -17,6 +17,16 @@ interface Nebula {
   c2: string;
 }
 
+interface OrbitArc {
+  tilt: number;
+  tiltSpeed: number;
+  rx: number;
+  ry: number;
+  alpha: number;
+  dashOffset: number;
+  dashSpeed: number;
+}
+
 interface Cloud {
   angle: number;
   radialOffset: number;
@@ -45,6 +55,8 @@ export interface EarthState {
   earthClouds: Cloud[];
   cityLights: CityLight[];
 }
+
+export type OrbitArcs = OrbitArc[];
 
 export function createStarLayers(W: number, H: number): StarLayers {
   return {
@@ -76,6 +88,15 @@ export function createStarLayers(W: number, H: number): StarLayers {
   };
 }
 
+export function createOrbitArcs(W: number, H: number): OrbitArcs {
+  return [
+    { tilt: 0.18,  tiltSpeed: 0.000035, rx: W * 0.46, ry: H * 0.13, alpha: 0.07, dashOffset: 0, dashSpeed: 0.04 },
+    { tilt: -0.32, tiltSpeed: 0.000025, rx: W * 0.52, ry: H * 0.17, alpha: 0.05, dashOffset: 20, dashSpeed: -0.03 },
+    { tilt: 0.55,  tiltSpeed: 0.000018, rx: W * 0.40, ry: H * 0.10, alpha: 0.04, dashOffset: 5,  dashSpeed: 0.025 },
+    { tilt: -0.08, tiltSpeed: 0.000042, rx: W * 0.56, ry: H * 0.20, alpha: 0.035, dashOffset: 12, dashSpeed: -0.05 },
+  ];
+}
+
 export function createNebulae(W: number, H: number): Nebula[] {
   return [
     { x: W * 0.18, y: H * 0.22, r1: 110, r2: 280, c1: 'rgba(80, 60, 160, 0.18)', c2: 'rgba(40, 30, 100, 0)' },
@@ -103,6 +124,27 @@ export function createEarth(W: number, H: number): EarthState {
       flicker: Math.random() * Math.PI * 2,
     })),
   };
+}
+
+function drawOrbitArcs(ctx: CanvasRenderingContext2D, W: number, H: number, arcs: OrbitArcs): void {
+  ctx.save();
+  ctx.translate(W / 2, H * 0.52);
+  for (const arc of arcs) {
+    arc.tilt += arc.tiltSpeed;
+    arc.dashOffset += arc.dashSpeed;
+    ctx.save();
+    ctx.rotate(arc.tilt);
+    ctx.strokeStyle = `rgba(95,179,255,${arc.alpha})`;
+    ctx.lineWidth = 0.8;
+    ctx.setLineDash([6, 18]);
+    ctx.lineDashOffset = arc.dashOffset;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, arc.rx, arc.ry, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+  ctx.restore();
 }
 
 function drawNebulae(ctx: CanvasRenderingContext2D, W: number, H: number, nebulae: Nebula[]): void {
@@ -212,10 +254,12 @@ export function drawBackground(
   stars: StarLayers,
   nebulae: Nebula[],
   earth: EarthState,
+  orbitArcs?: OrbitArcs,
 ): void {
   ctx.fillStyle = '#02030a';
   ctx.fillRect(0, 0, W, H);
   drawNebulae(ctx, W, H, nebulae);
   drawStars(ctx, W, stars);
+  if (orbitArcs) drawOrbitArcs(ctx, W, H, orbitArcs);
   drawEarth(ctx, H, earth);
 }
