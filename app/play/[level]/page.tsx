@@ -61,8 +61,8 @@ export default function PlayPage({ params }: Props) {
     setScreen('playing');
   }
 
-  function handleLevelEnd(success: boolean, failReason?: string, l3Result?: string) {
-    setLevelResult(success, failReason ?? null, l3Result);
+  function handleLevelEnd(success: boolean, failReason?: string, extras?: { l3Result?: string; l4Result?: string; survivalTime?: number }) {
+    setLevelResult(success, failReason ?? null, extras);
     setScreen('outro');
   }
 
@@ -152,13 +152,17 @@ export default function PlayPage({ params }: Props) {
         {/* Complete screen */}
         {screen === 'complete' && (
           <div className={styles.completeScreen}>
-            <div className={styles.completeEra}>Stage 1 complete</div>
-            <h1 className={styles.completeTitle}>To be continued</h1>
+            <div className={styles.completeEra}>All six levels complete</div>
+            <h1 className={styles.completeTitle}>There is no level 7.</h1>
             <p className={styles.completeBody}>
-              Levels 4 through 6 are in development. The Iridium / Cosmos predictive collision,
-              the megaconstellation discrimination layer, and the Kessler cascade endgame are next.
+              The European Space Agency's ClearSpace-1 mission will be the first attempt
+              in history to remove a single piece of orbital debris. The contract is €86 million.
+              Objects in orbit larger than 1 cm: over 1,200,000.
             </p>
-            <button className={styles.completeBtn} onClick={() => router.push('/')}>Back to menu</button>
+            <p className={styles.completeBody} style={{ marginTop: '0.5rem', opacity: 0.6, fontSize: '0.85em' }}>
+              You have just played through 68 years of inaction.
+            </p>
+            <button className={styles.completeBtn} onClick={() => router.push('/')}>Back to start</button>
           </div>
         )}
       </div>

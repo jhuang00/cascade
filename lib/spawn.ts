@@ -1,5 +1,5 @@
 import type { GameObject, Vertex, CatalogEntry } from '@/lib/types';
-import { junkCatalog, activeCatalog, rareCatalog } from '@/data/catalog';
+import { junkCatalog, activeCatalog, rareCatalog, l4CollisionFragment } from '@/data/catalog';
 
 function makePoly(baseR: number): Vertex[] {
   const sides = 5 + Math.floor(Math.random() * 3);
@@ -22,11 +22,13 @@ function catalogLabel(entry: CatalogEntry): string {
 
 const JUNK_PALETTE = ['#9aa0aa', '#7c8088', '#a8acb6', '#b89878', '#8a8e98', '#c4956a'];
 
-export function spawnJunk(W: number, H: number): GameObject {
+// withFragmentation=true causes junk to split mid-flight (L2+)
+export function spawnJunk(W: number, H: number, withFragmentation = false): GameObject {
   const fromLeft = Math.random() > 0.5;
   const x = fromLeft ? 40 + Math.random() * W * 0.25 : W - 40 - Math.random() * W * 0.25;
   const targetX = fromLeft ? W * 0.55 + Math.random() * W * 0.35 : W * 0.1 + Math.random() * W * 0.35;
   const r = 16 + Math.random() * 8;
+  const shouldFragment = withFragmentation && Math.random() < 0.3;
   return {
     type: 'junk',
     x,
@@ -39,7 +41,42 @@ export function spawnJunk(W: number, H: number): GameObject {
     color: pickOne(JUNK_PALETTE),
     r,
     label: catalogLabel(pickOne(junkCatalog)),
+    fragmentsAt: shouldFragment ? H * 0.35 + Math.random() * H * 0.2 : undefined,
   };
+}
+
+// Spawn two child pieces when a junk fragment splits
+export function spawnJunkSplit(parent: GameObject): [GameObject, GameObject] {
+  const r = parent.r * 0.6;
+  const spread = 0.8 + Math.random() * 0.6;
+  const a = Math.random() * Math.PI * 2;
+  const base: Omit<GameObject, 'x' | 'y' | 'vx' | 'vy'> = {
+    type: 'junk',
+    rot: Math.random() * Math.PI * 2,
+    vrot: (Math.random() - 0.5) * 0.12,
+    verts: makePoly(r),
+    color: parent.color,
+    r,
+    label: parent.label,
+    fragmented: true,
+  };
+  return [
+    {
+      ...base,
+      x: parent.x,
+      y: parent.y,
+      vx: parent.vx + Math.cos(a) * spread,
+      vy: parent.vy + Math.sin(a) * spread,
+    },
+    {
+      ...base,
+      x: parent.x,
+      y: parent.y,
+      vx: parent.vx - Math.cos(a) * spread,
+      vy: parent.vy - Math.sin(a) * spread,
+      verts: makePoly(r),
+    },
+  ];
 }
 
 export function spawnFragment(cx: number, cy: number): GameObject {
@@ -59,6 +96,85 @@ export function spawnFragment(cx: number, cy: number): GameObject {
     r,
     label: 'FY-1C fragment · 2007 · CHN',
   };
+}
+
+// L4: Iridium 33 (active satellite, enters from right)
+export function spawnIridium33(W: number): GameObject {
+  return {
+    type: 'active',
+    x: W + 30,
+    y: 270,
+    vx: 0,
+    vy: 0,
+    xStart: W + 30,
+    xEnd: -30,
+    yBaseline: 270,
+    arcHeight: 110,
+    direction: -1,
+    speed: 0.95,
+    rot: 0,
+    vrot: 0.003,
+    r: 15,
+    color: '#5fb3ff',
+    label: 'IRIDIUM 33 · 1997 · USA',
+    sublabel: 'operational · 560 kg · 790 km altitude',
+    glowPhase: 0,
+    pulse: 0,
+  };
+}
+
+// L4: Cosmos 2251 (dead satellite, enters from left)
+export function spawnCosmos2251(H: number): GameObject {
+  return {
+    type: 'active',
+    x: -30,
+    y: H * 0.55,
+    vx: 0,
+    vy: 0,
+    xStart: -30,
+    xEnd: 710,
+    yBaseline: 255,
+    arcHeight: 88,
+    direction: 1,
+    speed: 0.95,
+    rot: 0.3,
+    vrot: 0.012,
+    r: 18,
+    color: '#7a7880',
+    label: 'COSMOS 2251 · 1993 · RUS',
+    sublabel: 'defunct since 1995 · 900 kg · 790 km altitude',
+    glowPhase: 0,
+    pulse: 0,
+    isDeadSat: true,
+  };
+}
+
+// L4: Collision fragment burst
+export function spawnCollisionFragment(cx: number, cy: number): GameObject {
+  const ang = Math.random() * Math.PI * 2;
+  const spd = 2 + Math.random() * 5.5;
+  const r = 5 + Math.random() * 6;
+  return {
+    type: 'fragment',
+    x: cx,
+    y: cy,
+    vx: Math.cos(ang) * spd,
+    vy: Math.sin(ang) * spd,
+    rot: Math.random() * Math.PI * 2,
+    vrot: (Math.random() - 0.5) * 0.18,
+    verts: makePoly(r),
+    color: pickOne(['#9aa0aa', '#7c8088', '#a8acb6', '#b89878']),
+    r,
+    label: catalogLabel(l4CollisionFragment),
+  };
+}
+
+// L6: Cascade fragment — smaller, faster
+export function spawnCascadeJunk(W: number, H: number): GameObject {
+  const j = spawnJunk(W, H, false);
+  j.r = Math.max(10, j.r * 0.75);
+  j.verts = makePoly(j.r);
+  return j;
 }
 
 export function spawnActive(W: number, H: number): GameObject {
@@ -83,6 +199,14 @@ export function spawnActive(W: number, H: number): GameObject {
     label: pickOne(activeCatalog),
     glowPhase: 0,
   };
+}
+
+// L5 variant: wider altitude spread for denser constellation feel
+export function spawnActiveDense(W: number, H: number): GameObject {
+  const sat = spawnActive(W, H);
+  sat.yBaseline = 160 + Math.random() * 200;
+  sat.arcHeight = 60 + Math.random() * 60;
+  return sat;
 }
 
 export function spawnRare(W: number, _H: number): GameObject {

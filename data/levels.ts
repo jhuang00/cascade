@@ -36,6 +36,10 @@ export const LEVELS: LevelConfig[] = [
         title: 'Blue — active satellites',
         body: "Blue satellites are working infrastructure — GPS, weather, internet. Don't slice them. Each one destroyed costs −25 points and damages real services. They follow stable orbital arcs — let them pass.",
       },
+      {
+        title: 'Fragmentation',
+        body: 'Some debris breaks apart mid-flight into smaller pieces. Catch them all — each fragment counts.',
+      },
     ],
     duration: 75,
     spawn: { junk: 45, active: 200, rare: 380 },
@@ -64,5 +68,71 @@ export const LEVELS: LevelConfig[] = [
     hardFails: { destroyed: 3 },
     outroFact: "China's 2007 ASAT test against Fengyun-1C generated over 3,500 catalogued debris fragments. Estimates suggest over a million pieces too small to track. Nineteen years later, more than 3,000 of those catalogued fragments are still in orbit. The debris spread from 200 km to 4,000 km in altitude, crossing the paths of nearly every active LEO satellite. The International Space Station has performed multiple emergency maneuvers to avoid this debris cloud.",
     isL3: true,
+  },
+  {
+    id: 4,
+    era: 'February 10, 2009',
+    title: 'The Collision',
+    backstory: "Two satellites. One alive, one dead. Both ignored the math. February 10, 2009, over the Taymyr Peninsula in Siberia.",
+    tutorials: [
+      {
+        title: 'Predictive collision',
+        body: "Two satellites will approach on converging paths. You have a few seconds. Collect the live blue one (SPACE + click / tap) to safely deflect it — best outcome. Or slice the dead gray one to destroy it — it's junk. Do nothing and they collide, leaving a fragment cloud you must clear.",
+      },
+      {
+        title: 'Collision aftermath',
+        body: "If the collision happens, 50 fragments scatter. Each is worth +25 points. You need a total score of 600 to pass. The collision fragments are your fastest path — but you have to clear them before they exit the frame.",
+      },
+    ],
+    duration: 90,
+    spawn: { junk: 50, active: 210, rare: 370 },
+    passScore: 600,
+    hardFails: { destroyed: 2 },
+    outroFact: "On February 10, 2009, the defunct Russian satellite Cosmos 2251 collided with the operational American satellite Iridium 33 at a relative velocity of 11.7 km/s — about 26,000 mph. It was the first confirmed accidental collision between two intact satellites. The collision produced 1,632 catalogued fragments. Most are still in orbit. Cosmos 2251 had been defunct since 1995 — a corpse drifting for 14 years before it killed a working satellite.",
+    isL4: true,
+  },
+  {
+    id: 5,
+    era: '2019–present',
+    title: 'The Megaconstellation',
+    backstory: "The sky is now mostly artificial. And mostly one company's. Over 10,000 Starlink satellites orbit today. Behind them: Kuiper, OneWeb, Qianfan, Guowang. The junk from 1982 and 2007 is still up there too — mixing with the new ones.",
+    tutorials: [
+      {
+        title: 'Discrimination layer',
+        body: "Active satellites now account for more than a third of everything you see. Read the screen before you swipe. Slicing one still costs −25 — and now they're everywhere. The FY-1C and Cosmos 2251 debris from earlier levels is still present in this sky.",
+      },
+      {
+        title: 'Score threshold',
+        body: "You need 500 points and can destroy at most 5 active satellites. The density is high and the mix is unfavorable. Precision matters more than speed.",
+      },
+    ],
+    duration: 60,
+    spawn: { junk: 38, active: 90, rare: 230 },
+    passScore: 500,
+    hardFails: { destroyed: 5 },
+    outroFact: "As of 2026, over 14,500 active satellites orbit Earth. SpaceX's Starlink operates more than 10,400 of them — more than every other operator combined. Two major breakups occurred in 2024 alone: a Long March 6A upper stage produced 700+ fragments in August, and Intelsat 33e fragmented in geostationary orbit in October producing 1,104+ fragments. The orbits are filling. The ASAT debris from China (2007) and Russia (2021) is still present, mixing with the new constellations.",
+    isL5: true,
+  },
+  {
+    id: 6,
+    era: 'Now and forward',
+    title: 'The Cascade',
+    backstory: "The cascade is no longer a future scenario. A 2025 Lewis & Kessler paper found that the current population of intact objects already exceeds the runaway threshold at nearly all altitudes between 520 and 1000 km. The math has already decided.",
+    tutorials: [
+      {
+        title: 'Cascade physics',
+        body: "Missed debris collides with other debris and spawns more pieces. Slicing an active satellite generates three fragments. The density meter at the top of the screen fills as the cascade compounds. You cannot win. You can only hold the line.",
+      },
+      {
+        title: 'Survival scoring',
+        body: "There is no score threshold. There is no time limit. The game ends when the orbital density saturates. Your score is how long you held out and how much you cleared. Collecting actives removes density from the meter. Destroying them accelerates it.",
+      },
+    ],
+    duration: 99999,
+    spawn: { junk: 42, active: 180, rare: 320 },
+    passScore: 1,
+    hardFails: {},
+    outroFact: "The European Space Agency's ClearSpace-1 mission, planned for 2026, will be the first attempt in history to actively remove a single piece of orbital debris. The contract is €86 million. Objects in orbit larger than 1 cm: over 1,200,000. You have just played through 68 years of inaction.",
+    isL6: true,
   },
 ];

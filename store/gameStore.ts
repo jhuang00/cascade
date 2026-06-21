@@ -1,12 +1,12 @@
 'use client';
 import { create } from 'zustand';
-import type { GameDisplayState, GameScreen } from '@/lib/types';
+import type { GameDisplayState, GameScreen, L4Result } from '@/lib/types';
 
 interface GameStore extends GameDisplayState {
   setScreen: (screen: GameScreen) => void;
   setMuted: (m: boolean) => void;
   syncFromEngine: (partial: Partial<GameDisplayState>) => void;
-  setLevelResult: (success: boolean, failReason: string | null, l3Result?: string) => void;
+  setLevelResult: (success: boolean, failReason: string | null, extras?: { l3Result?: string; l4Result?: string; survivalTime?: number }) => void;
   reset: () => void;
 }
 
@@ -26,6 +26,9 @@ const initialState: GameDisplayState = {
   isMuted: false,
   l3Result: null,
   fy1cSaved: false,
+  l4Result: null,
+  densityMeter: 0,
+  survivalTime: 0,
 };
 
 export const useGameStore = create<GameStore>((set) => ({
@@ -37,8 +40,14 @@ export const useGameStore = create<GameStore>((set) => ({
 
   syncFromEngine: (partial) => set((state) => ({ ...state, ...partial })),
 
-  setLevelResult: (resultSuccess, failReason, l3Result) =>
-    set({ resultSuccess, failReason, l3Result: (l3Result as GameDisplayState['l3Result']) ?? null }),
+  setLevelResult: (resultSuccess, failReason, extras) =>
+    set({
+      resultSuccess,
+      failReason,
+      l3Result: (extras?.l3Result as GameDisplayState['l3Result']) ?? null,
+      l4Result: (extras?.l4Result as L4Result) ?? null,
+      survivalTime: extras?.survivalTime ?? 0,
+    }),
 
   reset: () => set({ ...initialState }),
 }));

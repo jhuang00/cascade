@@ -41,3 +41,9 @@ export const l3FragmentLabel: CatalogEntry = {
   year: '2007',
   flag: 'CHN',
 };
+
+export const l4CollisionFragment: CatalogEntry = {
+  name: 'IRIDIUM/COSMOS fragment',
+  year: '2009',
+  flag: 'USA/RUS',
+};

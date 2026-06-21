@@ -36,8 +36,13 @@ export interface GameObject {
   pulse?: number;
   bobPhase?: number;
   baseY?: number;
-  // fy1c
+  // fy1c / cinematic satellites
   sublabel?: string;
+  // dead satellite (Cosmos 2251) — not a polygon, drawn as dead-sat shape
+  isDeadSat?: boolean;
+  // mid-flight fragmentation (L2+): y-value where this junk splits
+  fragmentsAt?: number;
+  fragmented?: boolean;
 }
 
 export interface Particle {
@@ -118,6 +123,8 @@ export interface MissileObj {
 export type GameScreen = 'menu' | 'intro' | 'playing' | 'outro' | 'complete';
 export type L3Phase = 'open' | 'appear' | 'approach' | 'impact' | 'aftermath' | 'outcome';
 export type L3Result = 'pass' | 'alternate' | 'fail' | 'fail-destroyed';
+export type L4Phase = 'open' | 'convergence' | 'critical' | 'safe' | 'deflected' | 'collision' | 'aftermath' | 'outcome';
+export type L4Result = 'saved' | 'deflected' | 'cleaned' | 'fail-score';
 
 export interface TutorialDef {
   title: string;
@@ -147,6 +154,9 @@ export interface LevelConfig {
   hardFails: HardFails;
   outroFact: string;
   isL3?: boolean;
+  isL4?: boolean;
+  isL5?: boolean;
+  isL6?: boolean;
 }
 
 export interface GameDisplayState {
@@ -165,6 +175,9 @@ export interface GameDisplayState {
   isMuted: boolean;
   l3Result: L3Result | null;
   fy1cSaved: boolean;
+  l4Result: L4Result | null;
+  densityMeter: number;
+  survivalTime: number;
 }
 
 export interface EngineGameState {
@@ -193,4 +206,6 @@ export interface EngineGameState {
   playing: boolean;
   ended: boolean;
   totalReentries: number;
+  densityMeter: number;
+  survivalTime: number;
 }
