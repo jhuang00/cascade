@@ -126,6 +126,13 @@ export function createEarth(W: number, H: number): EarthState {
   };
 }
 
+function makeOffscreen(W: number, H: number): HTMLCanvasElement {
+  const c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  return c;
+}
+
 function drawOrbitArcs(ctx: CanvasRenderingContext2D, W: number, H: number, arcs: OrbitArcs): void {
   ctx.save();
   ctx.translate(W / 2, H * 0.52);
@@ -145,16 +152,6 @@ function drawOrbitArcs(ctx: CanvasRenderingContext2D, W: number, H: number, arcs
     ctx.restore();
   }
   ctx.restore();
-}
-
-function drawNebulae(ctx: CanvasRenderingContext2D, W: number, H: number, nebulae: Nebula[]): void {
-  for (const n of nebulae) {
-    const grad = ctx.createRadialGradient(n.x, n.y, n.r1 * 0.3, n.x, n.y, n.r2);
-    grad.addColorStop(0, n.c1);
-    grad.addColorStop(1, n.c2);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-  }
 }
 
 function drawStars(ctx: CanvasRenderingContext2D, W: number, stars: StarLayers): void {
@@ -185,9 +182,13 @@ function drawStars(ctx: CanvasRenderingContext2D, W: number, stars: StarLayers):
   }
 }
 
-function drawEarth(ctx: CanvasRenderingContext2D, H: number, earth: EarthState): void {
-  earth.rotationOffset += 0.00015;
+// Renders the static Earth body (haze, atmospheric glow, dark surface gradient).
+// Only called once since these gradients never change.
+function renderEarthBody(c: HTMLCanvasElement, earth: EarthState): void {
+  const ctx = c.getContext('2d')!;
+  const W = c.width, H = c.height;
   const { cx, cy, r } = earth;
+  ctx.clearRect(0, 0, W, H);
 
   const hazeGrad = ctx.createRadialGradient(cx, cy, r - 10, cx, cy, r + 90);
   hazeGrad.addColorStop(0, 'rgba(90, 160, 230, 0.18)');
@@ -216,6 +217,13 @@ function drawEarth(ctx: CanvasRenderingContext2D, H: number, earth: EarthState):
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.fill();
+}
+
+// Renders city lights and cloud wisps (rotation-dependent, cached every 8 frames).
+function renderEarthDynamic(c: HTMLCanvasElement, H: number, earth: EarthState): void {
+  const ctx = c.getContext('2d')!;
+  const { cx, cy, r } = earth;
+  ctx.clearRect(0, 0, c.width, c.height);
 
   for (const light of earth.cityLights) {
     const a = light.angle + earth.rotationOffset;
@@ -247,6 +255,13 @@ function drawEarth(ctx: CanvasRenderingContext2D, H: number, earth: EarthState):
   }
 }
 
+// Offscreen caches — module-level, created lazily on first drawBackground call.
+let _nebulaCache: HTMLCanvasElement | null = null;
+let _earthBodyCache: HTMLCanvasElement | null = null;
+let _earthDynamicCache: HTMLCanvasElement | null = null;
+let _starsCache: HTMLCanvasElement | null = null;
+let _bgFrame = 0;
+
 export function drawBackground(
   ctx: CanvasRenderingContext2D,
   W: number,
@@ -256,10 +271,75 @@ export function drawBackground(
   earth: EarthState,
   orbitArcs?: OrbitArcs,
 ): void {
+  _bgFrame++;
+
   ctx.fillStyle = '#02030a';
   ctx.fillRect(0, 0, W, H);
-  drawNebulae(ctx, W, H, nebulae);
-  drawStars(ctx, W, stars);
+
+  // Nebulae: completely static, render once
+  if (!_nebulaCache) {
+    _nebulaCache = makeOffscreen(W, H);
+    const nc = _nebulaCache.getContext('2d')!;
+    for (const n of nebulae) {
+      const grad = nc.createRadialGradient(n.x, n.y, n.r1 * 0.3, n.x, n.y, n.r2);
+      grad.addColorStop(0, n.c1);
+      grad.addColorStop(1, n.c2);
+      nc.fillStyle = grad;
+      nc.fillRect(0, 0, W, H);
+    }
+  }
+  ctx.drawImage(_nebulaCache, 0, 0);
+
+  // Stars: advance all positions every frame (state must always progress).
+  // Far + mid stars (205 total) move < 0.1px/frame — cache to offscreen, refresh every 3 frames.
+  // Near stars (28) twinkle and drift visibly — drawn live.
+  for (const s of stars.farStars) { s.x += s.vx; if (s.x < -2) s.x = W + 2; }
+  for (const s of stars.midStars) { s.x += s.vx; if (s.x < -2) s.x = W + 2; }
+
+  if (!_starsCache || _bgFrame % 3 === 0) {
+    if (!_starsCache) _starsCache = makeOffscreen(W, H);
+    const sc = _starsCache.getContext('2d')!;
+    sc.clearRect(0, 0, W, H);
+    for (const s of stars.farStars) {
+      sc.fillStyle = `rgba(220,230,255,${s.a})`;
+      sc.fillRect(s.x, s.y, s.r, s.r);
+    }
+    for (const s of stars.midStars) {
+      sc.fillStyle = `rgba(230,235,255,${s.a})`;
+      sc.fillRect(s.x, s.y, s.r, s.r);
+    }
+  }
+  ctx.drawImage(_starsCache, 0, 0);
+
+  for (const s of stars.nearStars) {
+    s.x += s.vx;
+    if (s.x < -2) s.x = W + 2;
+    s.twinkle += (s.twinkleSpeed ?? 0.025);
+    const tw = 0.65 + Math.sin(s.twinkle) * 0.35;
+    ctx.fillStyle = `rgba(240,245,255,${s.a * tw})`;
+    ctx.fillRect(s.x, s.y, s.r, s.r);
+    if (s.r > 1.4) {
+      ctx.fillStyle = `rgba(140,200,255,${s.a * tw * 0.4})`;
+      ctx.fillRect(s.x - 1, s.y, 1, s.r);
+      ctx.fillRect(s.x + s.r, s.y, 1, s.r);
+    }
+  }
+
+  // Orbit arcs: live (they animate)
   if (orbitArcs) drawOrbitArcs(ctx, W, H, orbitArcs);
-  drawEarth(ctx, H, earth);
+
+  // Earth body: static gradients, render once
+  earth.rotationOffset += 0.00015;
+  if (!_earthBodyCache) {
+    _earthBodyCache = makeOffscreen(W, H);
+    renderEarthBody(_earthBodyCache, earth);
+  }
+  ctx.drawImage(_earthBodyCache, 0, 0);
+
+  // Earth dynamic (city lights + clouds): rotation-dependent, update every 8 frames
+  if (!_earthDynamicCache || _bgFrame % 8 === 0) {
+    if (!_earthDynamicCache) _earthDynamicCache = makeOffscreen(W, H);
+    renderEarthDynamic(_earthDynamicCache, H, earth);
+  }
+  ctx.drawImage(_earthDynamicCache, 0, 0);
 }

@@ -8,7 +8,7 @@ import styles from './GameCanvas.module.css';
 
 interface Props {
   levelIdx: number;
-  onLevelEnd: (success: boolean, failReason?: string, l3Result?: string) => void;
+  onLevelEnd: (success: boolean, failReason?: string, extras?: { l3Result?: string; l4Result?: string; survivalTime?: number }) => void;
 }
 
 export default function GameCanvas({ levelIdx, onLevelEnd }: Props) {
@@ -21,7 +21,7 @@ export default function GameCanvas({ levelIdx, onLevelEnd }: Props) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const observer = new ResizeObserver(() => {
-      const dpr = window.devicePixelRatio || 1;
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       canvas.width  = Math.round(canvas.clientWidth  * dpr);
       canvas.height = Math.round(canvas.clientHeight * dpr);
     });
@@ -37,8 +37,8 @@ export default function GameCanvas({ levelIdx, onLevelEnd }: Props) {
       onDisplayUpdate: (partial: Partial<GameDisplayState>) => {
         syncFromEngine(partial);
       },
-      onLevelEnd: (success, failReason, l3Result) => {
-        onLevelEnd(success, failReason, l3Result);
+      onLevelEnd: (success, failReason, extras) => {
+        onLevelEnd(success, failReason, extras);
       },
     });
     engineRef.current = engine;

@@ -36,7 +36,7 @@ export default function MenuPage() {
     const orbitArcs = createOrbitArcs(W, H);
 
     const syncSize = () => {
-      const dpr = window.devicePixelRatio || 1;
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       canvas.width = Math.round(canvas.clientWidth * dpr);
       canvas.height = Math.round(canvas.clientHeight * dpr);
     };

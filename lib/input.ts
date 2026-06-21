@@ -9,49 +9,54 @@ interface InputCallbacks {
   onCollectEnd(): void;
 }
 
-function canvasPos(e: MouseEvent | TouchEvent, canvas: HTMLCanvasElement, W: number, H: number): { x: number; y: number } {
-  const r = canvas.getBoundingClientRect();
-  const t = 'touches' in e
-    ? (e.touches[0] || (e as TouchEvent).changedTouches[0])
-    : e;
-  return {
-    x: (t.clientX - r.left) * (W / r.width),
-    y: (t.clientY - r.top) * (H / r.height),
-  };
-}
-
 export function attachInput(
   canvas: HTMLCanvasElement,
   W: number,
   H: number,
   cbs: InputCallbacks,
 ): () => void {
+  // Cache getBoundingClientRect — calling it on every pointermove forces a layout
+  // reflow. The canvas position relative to the viewport only changes on resize.
+  let cachedRect = canvas.getBoundingClientRect();
+  const refreshRect = () => { cachedRect = canvas.getBoundingClientRect(); };
+  window.addEventListener('resize', refreshRect);
+
+  function canvasPos(e: MouseEvent | TouchEvent): { x: number; y: number } {
+    const t = 'touches' in e
+      ? (e.touches[0] || (e as TouchEvent).changedTouches[0])
+      : e;
+    return {
+      x: (t.clientX - cachedRect.left) * (W / cachedRect.width),
+      y: (t.clientY - cachedRect.top)  * (H / cachedRect.height),
+    };
+  }
+
   let pressStart: { x: number; y: number; time: number } | null = null;
 
   const onMouseMove = (e: MouseEvent) => {
-    const p = canvasPos(e, canvas, W, H);
+    const p = canvasPos(e);
     cbs.onMove(p.x, p.y);
   };
   const onMouseLeave = () => cbs.onLeave();
   const onMouseDown = (e: MouseEvent) => {
-    const p = canvasPos(e, canvas, W, H);
+    const p = canvasPos(e);
     cbs.onTap(p.x, p.y);
   };
 
   const onTouchStart = (e: TouchEvent) => {
     e.preventDefault();
-    const p = canvasPos(e, canvas, W, H);
+    const p = canvasPos(e);
     pressStart = { x: p.x, y: p.y, time: Date.now() };
   };
   const onTouchMove = (e: TouchEvent) => {
     e.preventDefault();
-    const p = canvasPos(e, canvas, W, H);
+    const p = canvasPos(e);
     cbs.onMove(p.x, p.y);
   };
   const onTouchEnd = (e: TouchEvent) => {
     e.preventDefault();
     if (!pressStart) { cbs.onLeave(); return; }
-    const p = canvasPos(e, canvas, W, H);
+    const p = canvasPos(e);
     const dt = Date.now() - pressStart.time;
     const dx = p.x - pressStart.x;
     const dy = p.y - pressStart.y;
@@ -95,5 +100,6 @@ export function attachInput(
     document.removeEventListener('keydown', onKeyDown);
     document.removeEventListener('keyup', onKeyUp);
     window.removeEventListener('blur', onBlur);
+    window.removeEventListener('resize', refreshRect);
   };
 }

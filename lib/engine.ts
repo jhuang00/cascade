@@ -1,11 +1,13 @@
 import type { EngineGameState, GameDisplayState, GameObject } from '@/lib/types';
 import { LEVELS } from '@/data/levels';
 import { createStarLayers, createNebulae, createEarth, createOrbitArcs, drawBackground } from '@/lib/background';
-import { spawnJunk, spawnActive, spawnRare } from '@/lib/spawn';
+import { spawnJunk, spawnActive, spawnActiveDense, spawnRare, spawnJunkSplit } from '@/lib/spawn';
 import { drawObj, drawCatalogLabel } from '@/lib/render';
-import { sliceFx, collectFx, reentryBurnupFx } from '@/lib/fx';
+import { sliceFx, collectFx, explosionFx, reentryBurnupFx } from '@/lib/fx';
 import { attachInput } from '@/lib/input';
 import { createL3Manager } from '@/lib/l3Cinematic';
+import { createL4Manager } from '@/lib/l4Cinematic';
+import { createCascadeManager } from '@/lib/cascade';
 import * as Audio from '@/lib/audio';
 
 const W = 680;
@@ -24,12 +26,20 @@ function makeEngineGameState(): EngineGameState {
     currentLevelIdx: 0,
     playing: false, ended: false,
     totalReentries: 0,
+    densityMeter: 0,
+    survivalTime: 0,
   };
+}
+
+interface LevelEndExtras {
+  l3Result?: string;
+  l4Result?: string;
+  survivalTime?: number;
 }
 
 interface EngineCallbacks {
   onDisplayUpdate: (state: Partial<GameDisplayState>) => void;
-  onLevelEnd: (success: boolean, failReason?: string, l3Result?: string) => void;
+  onLevelEnd: (success: boolean, failReason?: string, extras?: LevelEndExtras) => void;
 }
 
 export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
@@ -39,6 +49,18 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
   const earth = createEarth(W, H);
   const orbitArcs = createOrbitArcs(W, H);
   const l3 = createL3Manager();
+  const l4 = createL4Manager();
+  const cascade = createCascadeManager();
+
+  // Pre-render static scanlines once; composite with a single drawImage per frame.
+  const scanlineCanvas = document.createElement('canvas');
+  scanlineCanvas.width = W;
+  scanlineCanvas.height = H;
+  {
+    const sc = scanlineCanvas.getContext('2d')!;
+    sc.fillStyle = '#000000';
+    for (let y = 0; y < H; y += 4) sc.fillRect(0, y, W, 1.5);
+  }
 
   let gs = makeEngineGameState();
   let rafId = 0;
@@ -47,6 +69,10 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
 
   function pushDisplay(): void {
     const lv = LEVELS[gs.currentLevelIdx];
+    let trackingCount = gs.objs.length;
+    if (gs.currentLevelIdx === 2) trackingCount += l3.getFragments().length;
+    if (gs.currentLevelIdx === 3) trackingCount += l4.getFragments().length;
+
     cbs.onDisplayUpdate({
       score: gs.score,
       timeRemaining: gs.timeRemaining,
@@ -54,39 +80,72 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
       missed: gs.missed,
       destroyed: gs.destroyed,
       collected: gs.collected,
-      trackingCount: gs.objs.length + (gs.currentLevelIdx === 2 ? l3.getFragments().length : 0),
+      trackingCount,
       reentryCount: gs.totalReentries,
       currentLevelIdx: gs.currentLevelIdx,
       isMuted: Audio.isMuted(),
       fy1cSaved: lv?.isL3 ? l3.isSaved() : false,
+      densityMeter: gs.densityMeter,
+      survivalTime: gs.survivalTime,
     });
   }
 
-  function endLevel(success: boolean, failReason?: string, l3Result?: string): void {
+  function endLevel(success: boolean, failReason?: string, extras?: LevelEndExtras): void {
     if (levelEnded) return;
     levelEnded = true;
     gs.playing = false;
     gs.ended = true;
     if (success) Audio.playLevelWin(); else Audio.playLevelLose();
-    cbs.onLevelEnd(success, failReason, l3Result);
+    cbs.onLevelEnd(success, failReason, extras);
   }
 
   function checkWinLoss(): void {
     const lv = LEVELS[gs.currentLevelIdx];
     if (!lv || !gs.playing || levelEnded) return;
 
-    if (lv.isL3) {
-      if (gs.destroyed >= (lv.hardFails.destroyed ?? 999)) {
-        const result = l3.getResult(gs.score, lv.passScore, gs.destroyed, lv.hardFails.destroyed ?? 3);
-        endLevel(false, 'too many active satellites destroyed', result ?? 'fail-destroyed');
-      } else if (gs.timeRemaining <= 0) {
-        const result = l3.getResult(gs.score, lv.passScore, gs.destroyed, lv.hardFails.destroyed ?? 3);
-        const passed = result === 'pass' || result === 'alternate';
-        endLevel(passed, passed ? undefined : 'score threshold not reached', result ?? 'fail');
+    // L6 — cascade survival, no win/fail, ends when density saturates
+    if (lv.isL6) {
+      if (cascade.isDead()) {
+        endLevel(true, undefined, { survivalTime: cascade.getSurvivalTime() });
       }
       return;
     }
 
+    // L4 — collision cinematic
+    if (lv.isL4) {
+      if (lv.hardFails.destroyed && gs.destroyed >= lv.hardFails.destroyed) {
+        const result = l4.getResult(gs.score, lv.passScore);
+        endLevel(false, 'too many active satellites destroyed', { l4Result: result });
+        return;
+      }
+      if (gs.timeRemaining <= 0) {
+        const result = l4.getResult(gs.score, lv.passScore);
+        const passed = result !== 'fail-score';
+        endLevel(passed, passed ? undefined : 'score threshold not reached', { l4Result: result });
+      }
+      return;
+    }
+
+    // L3 — cinematic event
+    if (lv.isL3) {
+      if (gs.destroyed >= (lv.hardFails.destroyed ?? 999)) {
+        const result = l3.getResult(gs.score, lv.passScore, gs.destroyed, lv.hardFails.destroyed ?? 3);
+        endLevel(false, 'too many active satellites destroyed', { l3Result: result ?? undefined });
+      } else if (gs.timeRemaining <= 0) {
+        const result = l3.getResult(gs.score, lv.passScore, gs.destroyed, lv.hardFails.destroyed ?? 3);
+        const passed = result === 'pass' || result === 'alternate';
+        endLevel(passed, passed ? undefined : 'score threshold not reached', { l3Result: result ?? undefined });
+      }
+      return;
+    }
+
+    // L5 — score-drops-below-zero hard fail
+    if (lv.isL5 && gs.score < 0) {
+      endLevel(false, 'net score fell below zero');
+      return;
+    }
+
+    // Standard L1/L2/L5 logic
     if (lv.hardFails.missed && gs.missed >= lv.hardFails.missed) {
       endLevel(false, 'too many pieces missed — gross inattention');
       return;
@@ -95,7 +154,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
       endLevel(false, 'too many active satellites destroyed');
       return;
     }
-    if (gs.score >= lv.passScore) {
+    if (!lv.isL6 && gs.score >= lv.passScore) {
       endLevel(true);
       return;
     }
@@ -106,7 +165,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
 
   function addTrail(x: number, y: number): void {
     gs.trail.push({ x, y, life: 14 });
-    if (gs.trail.length > 22) gs.trail.shift();
+    if (gs.trail.length > 14) gs.trail.shift();
   }
 
   function checkSliceHits(x1: number, y1: number, x2: number, y2: number): void {
@@ -114,10 +173,18 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
     const dx = x2 - x1, dy = y2 - y1;
     if (dx * dx + dy * dy < 6) return;
     const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+    const lv = LEVELS[gs.currentLevelIdx];
 
-    if (LEVELS[gs.currentLevelIdx]?.isL3) {
+    if (lv?.isL3) {
       const l3sliced = l3.checkSliceFragments(mx, my, gs);
       if (l3sliced) pushDisplay();
+    }
+
+    if (lv?.isL4) {
+      const l4cosmoSliced = l4.checkSliceCosmos(mx, my, gs);
+      if (l4cosmoSliced) { pushDisplay(); return; }
+      const l4fragSliced = l4.checkSliceFragments(mx, my, gs);
+      if (l4fragSliced) pushDisplay();
     }
 
     for (let i = gs.objs.length - 1; i >= 0; i--) {
@@ -141,6 +208,28 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
         gs.labels.push({ x: o.x, y: o.y + 2, text: '−25 / infrastructure damaged', life: 55, maxLife: 55, color: '#ff5a5a' });
         gs.flashes.push({ x: o.x, y: o.y, r: 5, life: 20, maxLife: 20, color: '#ff5050' });
         Audio.playActiveHit();
+        // L6: destroying active spawns 3 fragments and raises density
+        if (lv?.isL6) {
+          cascade.onActiveDestroyed();
+          gs.densityMeter = cascade.getDensity();
+          for (let j = 0; j < 3; j++) {
+            const ang = Math.random() * Math.PI * 2;
+            const spd = 2 + Math.random() * 3;
+            const r = 7 + Math.random() * 4;
+            gs.objs.push({
+              type: 'junk',
+              x: o.x, y: o.y,
+              vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd - 1,
+              rot: Math.random() * Math.PI * 2,
+              vrot: (Math.random() - 0.5) * 0.15,
+              r,
+              verts: makePolyLocal(r),
+              color: o.color,
+              label: 'cascade fragment · 2026',
+              fragmented: true,
+            });
+          }
+        }
       } else if (o.type === 'rare') {
         gs.score += 5;
         gs.labels.push({ x: o.x, y: o.y - 18, text: o.label + ' lost', life: 55, maxLife: 55, color: '#ffb070' });
@@ -150,28 +239,63 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
     }
   }
 
+  // Inline poly helper (avoids importing spawn just for the poly function)
+  function makePolyLocal(baseR: number) {
+    const sides = 5 + Math.floor(Math.random() * 3);
+    const verts = [];
+    for (let i = 0; i < sides; i++) {
+      const ang = (i / sides) * Math.PI * 2;
+      const r = baseR * (0.65 + Math.random() * 0.55);
+      verts.push({ x: Math.cos(ang) * r, y: Math.sin(ang) * r });
+    }
+    return verts;
+  }
+
   function handleTap(x: number, y: number): void {
     if (!gs.playing || levelEnded) return;
     Audio.initAudio();
+    const lv = LEVELS[gs.currentLevelIdx];
 
-    if (LEVELS[gs.currentLevelIdx]?.isL3) {
+    if (lv?.isL3) {
       if (l3.handleTap(x, y, gs)) { pushDisplay(); return; }
     }
 
+    if (lv?.isL4) {
+      if (l4.handleTap(x, y, gs)) { pushDisplay(); return; }
+    }
+
+    // L6 collect: collecting an active reduces density
     for (let i = gs.objs.length - 1; i >= 0; i--) {
       const o = gs.objs[i];
-      if (o.type !== 'rare') continue;
+      if (o.type !== 'rare' && !(lv?.isL6 && o.type === 'active')) continue;
       const ddx = o.x - x, ddy = o.y - y;
       if (ddx * ddx + ddy * ddy >= (o.r + 16) ** 2) continue;
-      collectFx(gs, o);
-      gs.objs.splice(i, 1);
-      gs.score += 100;
-      gs.collected++;
-      gs.labels.push({ x: o.x, y: o.y - 18, text: o.label, life: 65, maxLife: 65, color: '#ffe0a8' });
-      gs.labels.push({ x: o.x, y: o.y + 2, text: '+100 preserved', life: 60, maxLife: 60, color: '#ffd080' });
-      Audio.playCollect();
-      pushDisplay();
-      return;
+
+      if (o.type === 'rare') {
+        collectFx(gs, o);
+        gs.objs.splice(i, 1);
+        gs.score += 100;
+        gs.collected++;
+        gs.labels.push({ x: o.x, y: o.y - 18, text: o.label, life: 65, maxLife: 65, color: '#ffe0a8' });
+        gs.labels.push({ x: o.x, y: o.y + 2, text: '+100 preserved', life: 60, maxLife: 60, color: '#ffd080' });
+        Audio.playCollect();
+        pushDisplay();
+        return;
+      }
+
+      if (lv?.isL6 && o.type === 'active') {
+        collectFx(gs, o);
+        gs.objs.splice(i, 1);
+        gs.score += 50;
+        gs.collected++;
+        cascade.onActiveCollected();
+        gs.densityMeter = cascade.getDensity();
+        gs.labels.push({ x: o.x, y: o.y - 18, text: o.label, life: 65, maxLife: 65, color: '#ffe0a8' });
+        gs.labels.push({ x: o.x, y: o.y + 2, text: '+50 · density relieved', life: 60, maxLife: 60, color: '#ffd080' });
+        Audio.playCollect();
+        pushDisplay();
+        return;
+      }
     }
   }
 
@@ -179,20 +303,30 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
     const lv = LEVELS[gs.currentLevelIdx];
     if (!lv) return;
 
-    let spawnCfg = lv.spawn;
-    if (lv.isL3) {
-      spawnCfg = l3.getSpawnConfig();
+    // L6 delegates entirely to cascade manager
+    if (lv.isL6) {
+      cascade.tick(gs);
+      gs.densityMeter = cascade.getDensity();
+      gs.survivalTime = cascade.getSurvivalTime();
+      return;
     }
+
+    let spawnCfg = lv.spawn;
+    if (lv.isL3) spawnCfg = l3.getSpawnConfig();
+    if (lv.isL4) spawnCfg = l4.getSpawnConfig();
+
+    const withFrag = gs.currentLevelIdx >= 1; // L2+ have fragmentation
 
     gs.junkTimer++;
     gs.activeTimer++;
     gs.rareTimer++;
     if (spawnCfg.junk > 0 && gs.junkTimer > spawnCfg.junk) {
-      gs.objs.push(spawnJunk(W, H));
+      gs.objs.push(spawnJunk(W, H, withFrag));
       gs.junkTimer = 0;
     }
     if (spawnCfg.active > 0 && gs.activeTimer > spawnCfg.active) {
-      gs.objs.push(spawnActive(W, H));
+      const sat = lv.isL5 ? spawnActiveDense(W, H) : spawnActive(W, H);
+      gs.objs.push(sat);
       gs.activeTimer = 0;
     }
     if (spawnCfg.rare > 0 && gs.rareTimer > spawnCfg.rare) {
@@ -202,10 +336,21 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
   }
 
   function updateObjects(): void {
+    const toAdd: GameObject[] = [];
+
     for (let i = gs.objs.length - 1; i >= 0; i--) {
       const o: GameObject = gs.objs[i];
       if (o.type === 'junk') {
         o.x += o.vx; o.y += o.vy; o.vy += 0.18; o.rot += o.vrot;
+
+        // Mid-flight fragmentation (L2+)
+        if (o.fragmentsAt !== undefined && !o.fragmented && o.vy < 0 && o.y <= o.fragmentsAt) {
+          const [a, b] = spawnJunkSplit(o);
+          toAdd.push(a, b);
+          gs.objs.splice(i, 1);
+          gs.flashes.push({ x: o.x, y: o.y, r: 3, life: 8, maxLife: 8, color: '#c0c8d0' });
+          continue;
+        }
       } else if (o.type === 'active') {
         o.x += (o.direction ?? 1) * (o.speed ?? 1.3);
         const span = Math.abs((o.xEnd ?? W) - (o.xStart ?? 0));
@@ -227,10 +372,19 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
         gs.score -= 5;
         gs.totalReentries++;
         reentryBurnupFx(gs, o.x, H);
+        // L6 cascade rule on miss
+        if (LEVELS[gs.currentLevelIdx]?.isL6) {
+          cascade.onMiss();
+          gs.densityMeter = cascade.getDensity();
+        }
         pushDisplay();
       } else if (o.type !== 'junk' && (o.x < -60 || o.x > W + 60)) {
         gs.objs.splice(i, 1);
       }
+    }
+
+    if (toAdd.length) {
+      gs.objs.push(...toAdd);
     }
   }
 
@@ -298,13 +452,11 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
       const re = gs.reentries[i];
       re.y += re.vy; re.life--;
       const a = Math.max(0, re.life / re.maxLife);
-      const grad = ctx.createLinearGradient(re.x, re.y, re.x, re.y + re.streakLen);
-      grad.addColorStop(0, `rgba(255,180,80,${a * 0.05})`);
-      grad.addColorStop(0.4, `rgba(255,150,60,${a * 0.55})`);
-      grad.addColorStop(0.8, `rgba(255,90,40,${a * 0.75})`);
-      grad.addColorStop(1, `rgba(255,200,100,${a * 0.2})`);
-      ctx.fillStyle = grad;
-      ctx.fillRect(re.x - 2, re.y, 4, re.streakLen);
+      const seg = re.streakLen / 4;
+      ctx.fillStyle = `rgba(255,180,80,${a * 0.05})`;  ctx.fillRect(re.x - 2, re.y,         4, seg);
+      ctx.fillStyle = `rgba(255,150,60,${a * 0.55})`;  ctx.fillRect(re.x - 2, re.y + seg,   4, seg);
+      ctx.fillStyle = `rgba(255,90,40,${a * 0.75})`;   ctx.fillRect(re.x - 2, re.y + seg*2, 4, seg);
+      ctx.fillStyle = `rgba(255,200,100,${a * 0.2})`;  ctx.fillRect(re.x - 2, re.y + seg*3, 4, seg);
       if (re.life <= 0) gs.reentries.splice(i, 1);
     }
 
@@ -323,26 +475,36 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
     }
     if (gs.collectMode || gs.trail.length < 2) return;
 
-    // Glow pass — wide, soft outer halo
     ctx.save();
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+
+    // Soft outer glow — single batched path (diffuse haze, uniform width is fine).
+    // One stroke call instead of N individual paths.
+    ctx.strokeStyle = 'rgba(95,179,255,0.10)';
+    ctx.lineWidth = gs.trail.length * 1.2 + 14;
+    ctx.beginPath();
+    for (let i = 1; i < gs.trail.length; i++) {
+      const p1 = gs.trail[i - 1], p2 = gs.trail[i];
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+    }
+    ctx.stroke();
+
+    // Main outer pass
     for (let i = 1; i < gs.trail.length; i++) {
       const p1 = gs.trail[i - 1], p2 = gs.trail[i];
       const t = i / gs.trail.length;
       const a = t * (p1.life / 14) * 0.35;
       ctx.strokeStyle = `rgba(120,190,255,${a})`;
       ctx.lineWidth = i * 1.4 + 3;
-      ctx.shadowColor = 'rgba(95,179,255,0.5)';
-      ctx.shadowBlur = 8;
       ctx.beginPath();
       ctx.moveTo(p1.x, p1.y);
       ctx.lineTo(p2.x, p2.y);
       ctx.stroke();
     }
-    ctx.shadowBlur = 0;
 
-    // Core pass — bright sharp line
+    // Inner bright core
     for (let i = 1; i < gs.trail.length; i++) {
       const p1 = gs.trail[i - 1], p2 = gs.trail[i];
       const t = i / gs.trail.length;
@@ -359,27 +521,27 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
 
   function renderCollectMode(): void {
     if (!gs.collectMode) return;
+    const lv = LEVELS[gs.currentLevelIdx];
     ctx.strokeStyle = 'rgba(255,200,116,0.4)';
     ctx.lineWidth = 2;
     ctx.strokeRect(1, 1, W - 2, H - 2);
     ctx.font = '11px ui-monospace, "SF Mono", Menlo, monospace';
     ctx.fillStyle = 'rgba(255,200,116,0.85)';
     ctx.textAlign = 'center';
-    const isL3 = LEVELS[gs.currentLevelIdx]?.isL3;
-    ctx.fillText(
-      isL3 ? 'COLLECT MODE — click FY-1C or gold pulses' : 'COLLECT MODE — click gold pulses',
-      W / 2,
-      50,
-    );
+    const hint = lv?.isL3
+      ? 'COLLECT MODE — click FY-1C or gold pulses'
+      : lv?.isL4
+      ? 'COLLECT MODE — click IRIDIUM 33 to deflect, or gold pulses'
+      : lv?.isL6
+      ? 'COLLECT MODE — click active satellites to reduce density, or gold pulses'
+      : 'COLLECT MODE — click gold pulses';
+    ctx.fillText(hint, W / 2, 50);
   }
 
   function renderScanLines(): void {
     ctx.save();
     ctx.globalAlpha = 0.032;
-    ctx.fillStyle = '#000000';
-    for (let y = 0; y < H; y += 4) {
-      ctx.fillRect(0, y, W, 1.5);
-    }
+    ctx.drawImage(scanlineCanvas, 0, 0, W, H);
     ctx.restore();
   }
 
@@ -408,7 +570,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
 
     if (gs.playing) {
       const lv = LEVELS[gs.currentLevelIdx];
-      if (lv) {
+      if (lv && !lv.isL6) {
         const elapsed = Math.floor((Date.now() - gs.levelStartMs) / 1000);
         gs.timeRemaining = Math.max(0, lv.duration - elapsed);
       }
@@ -417,6 +579,15 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
 
       if (LEVELS[gs.currentLevelIdx]?.isL3) {
         l3.tick(gs, ctx, H);
+      }
+
+      if (LEVELS[gs.currentLevelIdx]?.isL4) {
+        l4.tick(gs, ctx);
+      }
+
+      // L6 density meter overlay (rendered inside canvas)
+      if (LEVELS[gs.currentLevelIdx]?.isL6) {
+        cascade.drawMeter(ctx);
       }
 
       updateObjects();
@@ -474,6 +645,8 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
       const lv = LEVELS[levelIdx];
       if (lv) gs.timeRemaining = lv.duration;
       if (lv?.isL3) l3.start(gs.levelStartMs);
+      if (lv?.isL4) l4.start(gs.levelStartMs);
+      if (lv?.isL6) cascade.start(gs.levelStartMs);
       cbs.onDisplayUpdate({ screen: 'playing', currentLevelIdx: levelIdx });
     },
 
