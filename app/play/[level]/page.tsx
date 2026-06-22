@@ -29,11 +29,30 @@ export default function PlayPage({ params }: Props) {
   const [missionMs, setMissionMs] = useState(0);
   const missionStartRef = useRef(Date.now());
   const [engineKey, setEngineKey] = useState(0);
+  // True when a touch device is held in portrait — the game pauses and a
+  // rotate-to-landscape prompt is shown (the playfield is too narrow upright).
+  const [rotateGate, setRotateGate] = useState(false);
 
   const lv = LEVELS[levelIdx];
 
   useEffect(() => {
+    const portrait = window.matchMedia('(orientation: portrait)');
+    const coarse = window.matchMedia('(pointer: coarse)');
+    const update = () => setRotateGate(portrait.matches && coarse.matches);
+    update();
+    portrait.addEventListener('change', update);
+    coarse.addEventListener('change', update);
+    return () => {
+      portrait.removeEventListener('change', update);
+      coarse.removeEventListener('change', update);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!lv) { router.push('/'); return; }
+    // The engine no longer starts until "Begin", so seed the level index the
+    // intro reads from before the engine would otherwise set it.
+    syncFromEngine({ currentLevelIdx: levelIdx });
     setScreen('intro');
   }, [levelIdx]);
 
@@ -44,6 +63,17 @@ export default function PlayPage({ params }: Props) {
     }, 1000);
     return () => clearInterval(id);
   }, []);
+
+  // Freeze the mission-elapsed clock while the rotate gate is up.
+  const missionPauseRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (rotateGate) {
+      missionPauseRef.current = Date.now();
+    } else if (missionPauseRef.current != null) {
+      missionStartRef.current += Date.now() - missionPauseRef.current;
+      missionPauseRef.current = null;
+    }
+  }, [rotateGate]);
 
   if (!lv) return null;
 
@@ -94,11 +124,14 @@ export default function PlayPage({ params }: Props) {
         </div>
       </div>
 
+      <div className={styles.stageArea}>
       <div className={styles.canvasWrap}>
         <GameCanvas
           key={engineKey}
           levelIdx={levelIdx}
           onLevelEnd={handleLevelEnd}
+          started={screen === 'playing'}
+          paused={rotateGate}
         />
 
         {/* Corner brackets */}
@@ -149,6 +182,20 @@ export default function PlayPage({ params }: Props) {
         <LevelIntro onBegin={handleBegin} />
         <LevelOutro onRetry={handleRetry} />
 
+        {/* Portrait rotate gate (touch devices only) */}
+        {rotateGate && (
+          <div className={styles.rotateGate}>
+            <div className={styles.rotateIcon} aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="6" width="18" height="12" rx="2" />
+                <path d="M7 2.5a4 4 0 0 1 4 1.5M17 21.5a4 4 0 0 1-4-1.5" />
+              </svg>
+            </div>
+            <div className={styles.rotateTitle}>Rotate your device</div>
+            <p className={styles.rotateBody}>Turn your phone sideways to play Cascade in landscape.</p>
+          </div>
+        )}
+
         {/* Complete screen */}
         {screen === 'complete' && (
           <div className={styles.completeScreen}>
@@ -165,6 +212,7 @@ export default function PlayPage({ params }: Props) {
             <button className={styles.completeBtn} onClick={() => router.push('/')}>Back to start</button>
           </div>
         )}
+      </div>
       </div>
 
       <div className={styles.help}>

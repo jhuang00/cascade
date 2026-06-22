@@ -1,0 +1,218 @@
+.frame {
+  width: clamp(200px, 72vw, 268px);
+  height: clamp(112px, 22vh, 140px);
+  flex-shrink: 0;
+  margin: 2px 0 14px;
+  border: 1px solid #23232b;
+  border-radius: 10px;
+  background:
+    radial-gradient(130% 120% at 50% 35%, rgba(34, 38, 54, 0.55), rgba(8, 8, 12, 0.65));
+  overflow: hidden;
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.4);
+}
+
+.svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Shared: animate transforms relative to each element's own box. */
+.svg [class] {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+/* Density meter fills from its left edge, not its center. */
+.svg .densFill {
+  transform-origin: left center;
+}
+
+.plus {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 11px;
+  fill: #ffc874;
+}
+
+/* ───────────────────────── SLICE ───────────────────────── */
+.sliceLeft  { animation: sliceLeft  3s ease-in-out infinite; }
+.sliceRight { animation: sliceRight 3s ease-in-out infinite; }
+.sliceTrail { animation: sliceTrail 3s ease-in-out infinite; }
+
+@keyframes sliceLeft {
+  0%, 40%   { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+  80%       { transform: translate(-16px, 5px) rotate(-14deg); opacity: 0.12; }
+  90%, 100% { transform: translate(-16px, 5px) rotate(-14deg); opacity: 0; }
+}
+@keyframes sliceRight {
+  0%, 40%   { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+  80%       { transform: translate(16px, -3px) rotate(12deg); opacity: 0.12; }
+  90%, 100% { transform: translate(16px, -3px) rotate(12deg); opacity: 0; }
+}
+@keyframes sliceTrail {
+  0%, 30%   { transform: translate(-58px, -30px); opacity: 0; }
+  40%       { transform: translate(0, 0); opacity: 1; }
+  54%       { transform: translate(62px, 32px); opacity: 0; }
+  100%      { transform: translate(62px, 32px); opacity: 0; }
+}
+
+/* ───────────────────────── JUNK ───────────────────────── */
+.junkA { animation: junkDriftA 7s linear infinite; }
+.junkB { animation: junkDriftB 9s linear infinite; }
+.junkC { animation: junkDriftC 8s linear infinite; }
+
+@keyframes junkDriftA {
+  0%   { transform: translate(-60px, 0) rotate(0deg); }
+  100% { transform: translate(250px, 8px) rotate(140deg); }
+}
+@keyframes junkDriftB {
+  0%   { transform: translate(-70px, 0) rotate(0deg); }
+  100% { transform: translate(250px, -6px) rotate(-120deg); }
+}
+@keyframes junkDriftC {
+  0%   { transform: translate(-50px, 0) rotate(0deg); }
+  100% { transform: translate(250px, 4px) rotate(100deg); }
+}
+
+/* ──────────────────────── COLLECT ──────────────────────── */
+.collectCore  { animation: collectCore  2.6s ease-in-out infinite; }
+.collectTap   { animation: collectTap   2.6s ease-in     infinite; }
+.collectBurst { animation: collectBurst 2.6s ease-out    infinite; }
+.collectPlus  { animation: collectPlus  2.6s ease-out    infinite; }
+
+@keyframes collectCore {
+  0%, 30%   { transform: scale(1);    opacity: 0.9; }
+  45%       { transform: scale(1.18); opacity: 1; }
+  60%       { transform: scale(0.4);  opacity: 0; }
+  100%      { transform: scale(1);    opacity: 0.9; }
+}
+@keyframes collectTap {
+  0%        { transform: scale(2.1); opacity: 0; }
+  35%       { transform: scale(1.1); opacity: 0.9; }
+  46%       { transform: scale(0.9); opacity: 0; }
+  100%      { transform: scale(0.9); opacity: 0; }
+}
+@keyframes collectBurst {
+  0%, 45%   { transform: scale(0.6); opacity: 0; }
+  50%       { opacity: 0.85; }
+  80%       { transform: scale(2.7); opacity: 0; }
+  100%      { transform: scale(2.7); opacity: 0; }
+}
+@keyframes collectPlus {
+  0%, 46%   { transform: translateY(0);     opacity: 0; }
+  55%       { transform: translateY(-6px);  opacity: 1; }
+  78%       { transform: translateY(-20px); opacity: 0; }
+  100%      { transform: translateY(-20px); opacity: 0; }
+}
+
+/* ───────────────────────── AVOID ───────────────────────── */
+.avoidSat { animation: avoidGlide 4.2s linear infinite; }
+
+@keyframes avoidGlide {
+  0%   { transform: translate(-130px, 18px); }
+  50%  { transform: translate(0, -14px); }
+  100% { transform: translate(130px, 18px); }
+}
+
+/* ──────────────────────── FRAGMENT ─────────────────────── */
+.fragWhole { animation: fragWhole 3s ease-in  infinite; }
+.fragP1    { animation: fragP1    3s ease-out infinite; }
+.fragP2    { animation: fragP2    3s ease-out infinite; }
+.fragP3    { animation: fragP3    3s ease-out infinite; }
+
+@keyframes fragWhole {
+  0%        { transform: translate(0, -34px); opacity: 1; }
+  40%       { transform: translate(0, 0);     opacity: 1; }
+  46%, 100% { transform: translate(0, 0);     opacity: 0; }
+}
+@keyframes fragP1 {
+  0%, 45%   { transform: translate(0, 0) rotate(0deg);     opacity: 0; }
+  52%       { opacity: 1; }
+  90%, 100% { transform: translate(-26px, 30px) rotate(140deg); opacity: 0; }
+}
+@keyframes fragP2 {
+  0%, 45%   { transform: translate(0, 0) rotate(0deg);     opacity: 0; }
+  52%       { opacity: 1; }
+  90%, 100% { transform: translate(4px, 38px) rotate(-90deg);    opacity: 0; }
+}
+@keyframes fragP3 {
+  0%, 45%   { transform: translate(0, 0) rotate(0deg);     opacity: 0; }
+  52%       { opacity: 1; }
+  90%, 100% { transform: translate(28px, 28px) rotate(120deg);   opacity: 0; }
+}
+
+/* ─────────────────────── COLLISION ─────────────────────── */
+.colA     { animation: colA     3.2s ease-in  infinite; }
+.colB     { animation: colB     3.2s ease-in  infinite; }
+.colFlash { animation: colFlash 3.2s ease-out infinite; }
+.colF1    { animation: colF1    3.2s ease-out infinite; }
+.colF2    { animation: colF2    3.2s ease-out infinite; }
+.colF3    { animation: colF3    3.2s ease-out infinite; }
+.colF4    { animation: colF4    3.2s ease-out infinite; }
+
+@keyframes colA {
+  0%        { transform: translate(-92px, 0); opacity: 1; }
+  42%       { transform: translate(0, 0);     opacity: 1; }
+  46%, 100% { transform: translate(0, 0);     opacity: 0; }
+}
+@keyframes colB {
+  0%        { transform: translate(92px, 0); opacity: 1; }
+  42%       { transform: translate(0, 0);    opacity: 1; }
+  46%, 100% { transform: translate(0, 0);    opacity: 0; }
+}
+@keyframes colFlash {
+  0%, 42%   { transform: scale(0.2); opacity: 0; }
+  48%       { transform: scale(1);   opacity: 0.95; }
+  62%       { transform: scale(2.2); opacity: 0; }
+  100%      { transform: scale(2.2); opacity: 0; }
+}
+@keyframes colF1 {
+  0%, 44%   { transform: translate(0, 0);        opacity: 0; }
+  50%       { opacity: 1; }
+  85%, 100% { transform: translate(-34px, -22px); opacity: 0; }
+}
+@keyframes colF2 {
+  0%, 44%   { transform: translate(0, 0);       opacity: 0; }
+  50%       { opacity: 1; }
+  85%, 100% { transform: translate(30px, -26px); opacity: 0; }
+}
+@keyframes colF3 {
+  0%, 44%   { transform: translate(0, 0);       opacity: 0; }
+  50%       { opacity: 1; }
+  85%, 100% { transform: translate(-28px, 26px); opacity: 0; }
+}
+@keyframes colF4 {
+  0%, 44%   { transform: translate(0, 0);      opacity: 0; }
+  50%       { opacity: 1; }
+  85%, 100% { transform: translate(32px, 24px); opacity: 0; }
+}
+
+/* ──────────────────────── DENSITY ──────────────────────── */
+.densFill { animation: densFill 4s ease-in-out infinite; }
+.densDot  { animation: densDot  4s ease-in-out infinite; }
+
+@keyframes densFill {
+  0%        { transform: scaleX(0); }
+  82%       { transform: scaleX(1); }
+  92%       { transform: scaleX(1); }
+  100%      { transform: scaleX(0); }
+}
+@keyframes densDot {
+  0%, 8%    { transform: scale(0);   opacity: 0; }
+  28%       { transform: scale(1);   opacity: 1; }
+  84%       { transform: scale(1);   opacity: 1; }
+  100%      { transform: scale(0.5); opacity: 0; }
+}
+
+/* Short landscape (phones): shrink the illustration so the frame fits. */
+@media (orientation: landscape) and (max-height: 480px) {
+  .frame {
+    width: clamp(150px, 42vw, 220px);
+    height: clamp(84px, 36vh, 120px);
+    margin: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .svg [class] { animation: none !important; }
+}

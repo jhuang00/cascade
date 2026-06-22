@@ -126,9 +126,19 @@ export type L3Result = 'pass' | 'alternate' | 'fail' | 'fail-destroyed';
 export type L4Phase = 'open' | 'convergence' | 'critical' | 'safe' | 'deflected' | 'collision' | 'aftermath' | 'outcome';
 export type L4Result = 'saved' | 'deflected' | 'cleaned' | 'fail-score';
 
+export type IllustrationKind =
+  | 'slice'
+  | 'junk'
+  | 'collect'
+  | 'avoid'
+  | 'fragment'
+  | 'collision'
+  | 'density';
+
 export interface TutorialDef {
   title: string;
   body: string;
+  illustration?: IllustrationKind;
 }
 
 export interface SpawnConfig {

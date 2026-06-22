@@ -167,8 +167,10 @@ export function drawCinematicSat(
   ctx.font = '11px ui-monospace, "SF Mono", Menlo, monospace';
   ctx.fillStyle = o.isDeadSat ? 'rgba(180,170,160,0.9)' : 'rgba(180,220,255,0.95)';
   ctx.textAlign = 'left';
-  const labelX = o.x < convergencePoint.x ? o.x + o.r + 8 : o.x - o.r - 8;
-  const labelAlign = o.x < convergencePoint.x ? 'left' : 'right';
+  // Place each label on the outward side of the convergence point so the two
+  // satellites' labels stay separated (and legible) as they close in.
+  const labelX = o.x < convergencePoint.x ? o.x - o.r - 8 : o.x + o.r + 8;
+  const labelAlign = o.x < convergencePoint.x ? 'right' : 'left';
   ctx.textAlign = labelAlign;
   ctx.fillText(o.label, labelX, o.y - 6);
   if (o.sublabel) {

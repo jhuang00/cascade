@@ -9,9 +9,11 @@ import styles from './GameCanvas.module.css';
 interface Props {
   levelIdx: number;
   onLevelEnd: (success: boolean, failReason?: string, extras?: { l3Result?: string; l4Result?: string; survivalTime?: number }) => void;
+  started: boolean;
+  paused: boolean;
 }
 
-export default function GameCanvas({ levelIdx, onLevelEnd }: Props) {
+export default function GameCanvas({ levelIdx, onLevelEnd, started, paused }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<ReturnType<typeof createEngine> | null>(null);
   const { syncFromEngine, isMuted } = useGameStore();
@@ -21,7 +23,7 @@ export default function GameCanvas({ levelIdx, onLevelEnd }: Props) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const observer = new ResizeObserver(() => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width  = Math.round(canvas.clientWidth  * dpr);
       canvas.height = Math.round(canvas.clientHeight * dpr);
     });
@@ -42,13 +44,20 @@ export default function GameCanvas({ levelIdx, onLevelEnd }: Props) {
       },
     });
     engineRef.current = engine;
-    engine.startLevel(levelIdx);
 
     return () => {
       engine.destroy();
       engineRef.current = null;
     };
   }, [levelIdx]);
+
+  useEffect(() => {
+    if (started) engineRef.current?.startLevel(levelIdx);
+  }, [started]);
+
+  useEffect(() => {
+    engineRef.current?.setPaused(paused);
+  }, [paused]);
 
   useEffect(() => {
     engineRef.current?.setMuted(isMuted);

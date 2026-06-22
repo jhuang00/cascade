@@ -1,6 +1,6 @@
 import type { EngineGameState, GameDisplayState, GameObject } from '@/lib/types';
 import { LEVELS } from '@/data/levels';
-import { createStarLayers, createNebulae, createEarth, createOrbitArcs, drawBackground } from '@/lib/background';
+import { createStarLayers, createNebulae, createEarth, createOrbitArcs, drawBackground, flushBackgroundCaches } from '@/lib/background';
 import { spawnJunk, spawnActive, spawnActiveDense, spawnRare, spawnJunkSplit } from '@/lib/spawn';
 import { drawObj, drawCatalogLabel } from '@/lib/render';
 import { sliceFx, collectFx, explosionFx, reentryBurnupFx } from '@/lib/fx';
@@ -10,8 +10,12 @@ import { createL4Manager } from '@/lib/l4Cinematic';
 import { createCascadeManager } from '@/lib/cascade';
 import * as Audio from '@/lib/audio';
 
-const W = 680;
+// World height is locked; world width adapts to the device aspect ratio so the
+// game fills the screen without stretching its assets (see rebuildForSize).
+let W = 680;
 const H = 460;
+const W_MIN = 560;  // ≈1.22 aspect — safeguard against extreme spreads
+const W_MAX = 1200; // ≈2.61 aspect
 const HIT_RADIUS_BUFFER = 10;
 
 function makeEngineGameState(): EngineGameState {
@@ -44,28 +48,56 @@ interface EngineCallbacks {
 
 export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
   const ctx = canvas.getContext('2d')!;
-  const stars = createStarLayers(W, H);
-  const nebulae = createNebulae(W, H);
-  const earth = createEarth(W, H);
-  const orbitArcs = createOrbitArcs(W, H);
+  // Size-dependent background layers — regenerated when W changes (see rebuildForSize).
+  let stars = createStarLayers(W, H);
+  let nebulae = createNebulae(W, H);
+  let earth = createEarth(W, H);
+  let orbitArcs = createOrbitArcs(W, H);
   const l3 = createL3Manager();
   const l4 = createL4Manager();
   const cascade = createCascadeManager();
 
-  // Pre-render static scanlines once; composite with a single drawImage per frame.
+  // Pre-render static scanlines; recomposited only when W changes.
   const scanlineCanvas = document.createElement('canvas');
-  scanlineCanvas.width = W;
   scanlineCanvas.height = H;
-  {
+  function buildScanlines(): void {
+    scanlineCanvas.width = W;
     const sc = scanlineCanvas.getContext('2d')!;
+    sc.clearRect(0, 0, W, H);
     sc.fillStyle = '#000000';
     for (let y = 0; y < H; y += 4) sc.fillRect(0, y, W, 1.5);
+  }
+  buildScanlines();
+
+  // Recompute world width from the canvas buffer aspect (height locked at H),
+  // regenerating size-dependent assets only when the width actually changes.
+  let lastBufW = 0;
+  let lastBufH = 0;
+  function rebuildForSize(): void {
+    const bw = canvas.width, bh = canvas.height;
+    if (bw === lastBufW && bh === lastBufH) return;
+    lastBufW = bw; lastBufH = bh;
+    if (bh === 0) return;
+    const newW = Math.max(W_MIN, Math.min(W_MAX, Math.round(H * bw / bh)));
+    if (newW === W) return;
+    W = newW;
+    stars = createStarLayers(W, H);
+    nebulae = createNebulae(W, H);
+    earth = createEarth(W, H);
+    orbitArcs = createOrbitArcs(W, H);
+    buildScanlines();
+    flushBackgroundCaches();
+    l3.setWidth(W);
+    l4.setWidth(W);
+    cascade.setWidth(W);
   }
 
   let gs = makeEngineGameState();
   let rafId = 0;
   let frameCount = 0;
   let levelEnded = false;
+  let paused = false;
+  let pauseStartMs = 0;
 
   function pushDisplay(): void {
     const lv = LEVELS[gs.currentLevelIdx];
@@ -557,8 +589,14 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
 
   function loop(): void {
     frameCount++;
+    // Adapt world width to the current canvas buffer (only reallocates on change).
+    rebuildForSize();
     ctx.save();
-    ctx.scale(canvas.width / W, canvas.height / H);
+    // Uniform, centered scale: never stretch the world even if the canvas
+    // buffer's aspect ratio drifts from W:H — letterbox inside it instead.
+    const s = Math.min(canvas.width / W, canvas.height / H);
+    ctx.translate((canvas.width - W * s) / 2, (canvas.height - H * s) / 2);
+    ctx.scale(s, s);
     if (gs.shake > 0) {
       ctx.translate((Math.random() - 0.5) * gs.shake, (Math.random() - 0.5) * gs.shake);
       gs.shake *= 0.85;
@@ -568,7 +606,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
     drawBackground(ctx, W, H, stars, nebulae, earth, orbitArcs);
     renderScreenFlash();
 
-    if (gs.playing) {
+    if (gs.playing && !paused) {
       const lv = LEVELS[gs.currentLevelIdx];
       if (lv && !lv.isL6) {
         const elapsed = Math.floor((Date.now() - gs.levelStartMs) / 1000);
@@ -607,7 +645,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
     rafId = requestAnimationFrame(loop);
   }
 
-  const removeInput = attachInput(canvas, W, H, {
+  const removeInput = attachInput(canvas, () => ({ w: W, h: H }), {
     onMove(x, y) {
       if (!gs.playing || gs.collectMode) {
         lastTrailX = null; lastTrailY = null; return;
@@ -652,6 +690,21 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
 
     setMuted(m: boolean): void {
       Audio.setMuted(m);
+    },
+
+    // Freeze gameplay + clocks (e.g. while the portrait rotate-gate is shown).
+    setPaused(p: boolean): void {
+      if (p === paused) return;
+      paused = p;
+      if (p) {
+        pauseStartMs = Date.now();
+      } else {
+        const d = Date.now() - pauseStartMs;
+        gs.levelStartMs += d;
+        l3.pauseShift(d);
+        l4.pauseShift(d);
+        cascade.pauseShift(d);
+      }
     },
 
     destroy(): void {

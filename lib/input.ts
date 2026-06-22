@@ -11,8 +11,7 @@ interface InputCallbacks {
 
 export function attachInput(
   canvas: HTMLCanvasElement,
-  W: number,
-  H: number,
+  getDims: () => { w: number; h: number },
   cbs: InputCallbacks,
 ): () => void {
   // Cache getBoundingClientRect — calling it on every pointermove forces a layout
@@ -25,9 +24,10 @@ export function attachInput(
     const t = 'touches' in e
       ? (e.touches[0] || (e as TouchEvent).changedTouches[0])
       : e;
+    const { w, h } = getDims();
     return {
-      x: (t.clientX - cachedRect.left) * (W / cachedRect.width),
-      y: (t.clientY - cachedRect.top)  * (H / cachedRect.height),
+      x: (t.clientX - cachedRect.left) * (w / cachedRect.width),
+      y: (t.clientY - cachedRect.top)  * (h / cachedRect.height),
     };
   }
 
