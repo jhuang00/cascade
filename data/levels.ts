@@ -10,10 +10,12 @@ export const LEVELS: LevelConfig[] = [
       {
         title: 'Slice',
         body: 'Move your cursor across the screen. A trail follows your motion. Anything it crosses gets sliced.',
+        illustration: 'slice',
       },
       {
         title: 'Gray junk',
         body: "These are real objects abandoned in orbit. Old satellites, spent rocket stages, even tools dropped by astronauts. They're not coming down on their own.",
+        illustration: 'junk',
       },
     ],
     duration: 60,
@@ -31,14 +33,17 @@ export const LEVELS: LevelConfig[] = [
       {
         title: 'Gold pulse — rare artifacts',
         body: 'Gold pulses are historical objects worth preserving. Tap them on mobile, or hold SPACE and click on desktop, to collect them. Each one is worth +100 points.',
+        illustration: 'collect',
       },
       {
         title: 'Blue — active satellites',
         body: "Blue satellites are working infrastructure — GPS, weather, internet. Don't slice them. Each one destroyed costs −25 points and damages real services. They follow stable orbital arcs — let them pass.",
+        illustration: 'avoid',
       },
       {
         title: 'Fragmentation',
         body: 'Some debris breaks apart mid-flight into smaller pieces. Catch them all — each fragment counts.',
+        illustration: 'fragment',
       },
     ],
     duration: 75,
@@ -56,10 +61,12 @@ export const LEVELS: LevelConfig[] = [
       {
         title: 'Blue — active satellites',
         body: "Blue satellites are operating right now — GPS, weather, internet. Do not slice them. Slicing one costs −25 points and damages essential services. They cross the screen on orbital arcs — let them pass.",
+        illustration: 'avoid',
       },
       {
         title: 'The cinematic event',
         body: "Around the ten-second mark, a defunct weather satellite drifts in. A missile follows. If you act fast — hold SPACE and click the satellite (or tap on mobile) — you can preserve it for the alternate timeline, +200 points. If you don't, you'll be clearing the fragment cloud while regular junk continues to fall.",
+        illustration: 'collect',
       },
     ],
     duration: 60,
@@ -78,10 +85,12 @@ export const LEVELS: LevelConfig[] = [
       {
         title: 'Predictive collision',
         body: "Two satellites will approach on converging paths. You have a few seconds. Collect the live blue one (SPACE + click / tap) to safely deflect it — best outcome. Or slice the dead gray one to destroy it — it's junk. Do nothing and they collide, leaving a fragment cloud you must clear.",
+        illustration: 'collision',
       },
       {
         title: 'Collision aftermath',
         body: "If the collision happens, 50 fragments scatter. Each is worth +25 points. You need a total score of 600 to pass. The collision fragments are your fastest path — but you have to clear them before they exit the frame.",
+        illustration: 'fragment',
       },
     ],
     duration: 90,
@@ -100,10 +109,12 @@ export const LEVELS: LevelConfig[] = [
       {
         title: 'Discrimination layer',
         body: "Active satellites now account for more than a third of everything you see. Read the screen before you swipe. Slicing one still costs −25 — and now they're everywhere. The FY-1C and Cosmos 2251 debris from earlier levels is still present in this sky.",
+        illustration: 'avoid',
       },
       {
         title: 'Score threshold',
         body: "You need 500 points and can destroy at most 5 active satellites. The density is high and the mix is unfavorable. Precision matters more than speed.",
+        illustration: 'collect',
       },
     ],
     duration: 60,
@@ -122,10 +133,12 @@ export const LEVELS: LevelConfig[] = [
       {
         title: 'Cascade physics',
         body: "Missed debris collides with other debris and spawns more pieces. Slicing an active satellite generates three fragments. The density meter at the top of the screen fills as the cascade compounds. You cannot win. You can only hold the line.",
+        illustration: 'density',
       },
       {
         title: 'Survival scoring',
         body: "There is no score threshold. There is no time limit. The game ends when the orbital density saturates. Your score is how long you held out and how much you cleared. Collecting actives removes density from the meter. Destroying them accelerates it.",
+        illustration: 'density',
       },
     ],
     duration: 99999,

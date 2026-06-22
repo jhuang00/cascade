@@ -124,7 +124,7 @@ export function spawnIridium33(W: number): GameObject {
 }
 
 // L4: Cosmos 2251 (dead satellite, enters from left)
-export function spawnCosmos2251(H: number): GameObject {
+export function spawnCosmos2251(W: number, H: number): GameObject {
   return {
     type: 'active',
     x: -30,
@@ -132,7 +132,7 @@ export function spawnCosmos2251(H: number): GameObject {
     vx: 0,
     vy: 0,
     xStart: -30,
-    xEnd: 710,
+    xEnd: W + 30,
     yBaseline: 255,
     arcHeight: 88,
     direction: 1,

@@ -15,6 +15,8 @@ const PHASE_TIMINGS = {
 const FRAGMENT_COUNT = 40;
 const HIT_RADIUS_BUFFER = 10;
 
+let W = 680;
+
 interface L3State {
   phase: L3Phase;
   fy1c: GameObject | null;
@@ -62,7 +64,7 @@ export function createL3Manager() {
       s.phaseIndicator = 'Incoming — target acquired';
       s.phaseWarning = true;
       if (s.fy1c && !s.missile) {
-        s.missile = { x: 220 + Math.random() * 240, y: 999, speed: 4.2, trail: [] };
+        s.missile = { x: W * 0.32 + Math.random() * W * 0.35, y: 999, speed: 4.2, trail: [] };
         if (!s.missilePlayed) { Audio.playMissileLaunch(); s.missilePlayed = true; }
       }
     } else if (newPhase === 'impact') {
@@ -116,6 +118,10 @@ export function createL3Manager() {
       s = makeL3State();
       s.levelStartMs = levelStartMs;
     },
+
+    setWidth(w: number): void { W = w; },
+
+    pauseShift(ms: number): void { s.levelStartMs += ms; },
 
     getSpawnConfig() {
       return spawnConfigForPhase();

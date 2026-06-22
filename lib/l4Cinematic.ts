@@ -4,7 +4,7 @@ import { drawCinematicSat } from '@/lib/render';
 import { collectFx, explosionFx, sliceFx } from '@/lib/fx';
 import * as Audio from '@/lib/audio';
 
-const W = 680;
+let W = 680;
 const H = 460;
 const CONVERGENCE_POINT = { x: W / 2, y: 195 };
 const FRAGMENT_COUNT = 50;
@@ -58,7 +58,7 @@ export function createL4Manager() {
     s.phase = newPhase;
     if (newPhase === 'convergence') {
       s.iridium33 = spawnIridium33(W);
-      s.cosmos2251 = spawnCosmos2251(H);
+      s.cosmos2251 = spawnCosmos2251(W, H);
       if (!s.missilePlayed) {
         // Repurpose missile launch sound as "threat detected" tone
         Audio.playMissileLaunch();
@@ -122,6 +122,10 @@ export function createL4Manager() {
       s = makeL4State();
       s.levelStartMs = levelStartMs;
     },
+
+    setWidth(w: number): void { W = w; CONVERGENCE_POINT.x = W / 2; },
+
+    pauseShift(ms: number): void { s.levelStartMs += ms; },
 
     getSpawnConfig() {
       return spawnConfigForPhase();

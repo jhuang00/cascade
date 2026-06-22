@@ -57,41 +57,49 @@ export default function LevelOutro({ onRetry }: Props) {
     const ss = String(survivalTime % 60).padStart(2, '0');
     return (
       <div className={styles.screen}>
-        <div className={`${styles.resultLabel} ${styles.cascade}`}>Cascade reached</div>
-        <h1 className={styles.title}>The math has already decided.</h1>
+        <div className={styles.cols}>
+          <div className={styles.colA}>
+            <div className={`${styles.resultLabel} ${styles.cascade}`}>Cascade reached</div>
+            <h1 className={styles.title}>The math has already decided.</h1>
 
-        <div className={styles.statsRow}>
-          <div className={styles.stat}>
-            <span className={styles.statValue}>{mm}:{ss}</span>
-            <span className={styles.statLabel}>Survived</span>
+            <div className={styles.statsRow}>
+              <div className={styles.stat}>
+                <span className={styles.statValue}>{mm}:{ss}</span>
+                <span className={styles.statLabel}>Survived</span>
+              </div>
+              <div className={styles.stat}>
+                <span className={styles.statValue}>{cleared}</span>
+                <span className={styles.statLabel}>Cleared</span>
+              </div>
+              <div className={styles.stat}>
+                <span className={styles.statValue}>{collected}</span>
+                <span className={styles.statLabel}>Collected</span>
+              </div>
+              <div className={styles.stat}>
+                <span className={styles.statValue}>{score}</span>
+                <span className={styles.statLabel}>Score</span>
+              </div>
+            </div>
           </div>
-          <div className={styles.stat}>
-            <span className={styles.statValue}>{cleared}</span>
-            <span className={styles.statLabel}>Cleared</span>
-          </div>
-          <div className={styles.stat}>
-            <span className={styles.statValue}>{collected}</span>
-            <span className={styles.statLabel}>Collected</span>
-          </div>
-          <div className={styles.stat}>
-            <span className={styles.statValue}>{score}</span>
-            <span className={styles.statLabel}>Score</span>
+
+          <div className={styles.colB}>
+            <div className={styles.factCard}>
+              <h3 className={styles.factTitle}>From the catalog</h3>
+              <p className={styles.factBody}>{outroFact}</p>
+            </div>
+
+            <p className={styles.epilogue}>There is no level 7.</p>
+
+            <div className={styles.actions}>
+              <button className={styles.primary} onClick={() => { Audio.playClick(); setScreen('complete'); }}>
+                Continue
+              </button>
+              <button className={styles.secondary} onClick={() => { Audio.playClick(); router.push('/'); }}>
+                Back to menu
+              </button>
+            </div>
           </div>
         </div>
-
-        <div className={styles.factCard}>
-          <h3 className={styles.factTitle}>From the catalog</h3>
-          <p className={styles.factBody}>{outroFact}</p>
-        </div>
-
-        <p className={styles.epilogue}>There is no level 7.</p>
-
-        <button className={styles.primary} onClick={() => { Audio.playClick(); setScreen('complete'); }}>
-          Continue
-        </button>
-        <button className={styles.secondary} onClick={() => { Audio.playClick(); router.push('/'); }}>
-          Back to menu
-        </button>
       </div>
     );
   }
@@ -157,73 +165,81 @@ export default function LevelOutro({ onRetry }: Props) {
 
   return (
     <div className={styles.screen}>
-      <div className={`${styles.resultLabel} ${resultClass}`}>{resultLabel}</div>
-      <h1 className={styles.title}>{headline || lv.title}</h1>
+      <div className={styles.cols}>
+        <div className={styles.colA}>
+          <div className={`${styles.resultLabel} ${resultClass}`}>{resultLabel}</div>
+          <h1 className={styles.title}>{headline || lv.title}</h1>
 
-      {!resultSuccess && failReason && (
-        <div className={styles.failReason}>{failReason}</div>
-      )}
-
-      <div className={`${styles.scoreDisplay} ${scoreClass}`}>
-        <div className={styles.scoreMain}>
-          {displayScore}
-          {!lv.isL6 && (
-            <> <span className={styles.scoreDivider}>/</span> {lv.passScore}</>
+          {!resultSuccess && failReason && (
+            <div className={styles.failReason}>{failReason}</div>
           )}
+
+          <div className={`${styles.scoreDisplay} ${scoreClass}`}>
+            <div className={styles.scoreMain}>
+              {displayScore}
+              {!lv.isL6 && (
+                <> <span className={styles.scoreDivider}>/</span> {lv.passScore}</>
+              )}
+            </div>
+            <div className={styles.scoreLabel}>
+              {lv.isL6 ? 'final score' : 'your score · required to pass'}
+            </div>
+          </div>
+
+          <div className={styles.statsRow}>
+            <div className={styles.stat}>
+              <span className={styles.statValue}>{cleared}</span>
+              <span className={styles.statLabel}>Cleared</span>
+            </div>
+            <div className={styles.stat}>
+              <span className={styles.statValue}>{collected}</span>
+              <span className={styles.statLabel}>Collected</span>
+            </div>
+            <div className={styles.stat}>
+              <span className={styles.statValue}>{missed}</span>
+              <span className={styles.statLabel}>Missed</span>
+            </div>
+            {lv.isL3 && (
+              <div className={styles.stat}>
+                <span className={styles.statValue}>{fy1cSaved ? 'yes' : 'no'}</span>
+                <span className={styles.statLabel}>FY-1C saved</span>
+              </div>
+            )}
+            {lv.isL4 && (
+              <div className={styles.stat}>
+                <span className={styles.statValue}>
+                  {l4Result === 'saved' ? 'averted' : l4Result === 'deflected' ? 'deflected' : 'collision'}
+                </span>
+                <span className={styles.statLabel}>Collision</span>
+              </div>
+            )}
+            {lv.hardFails.destroyed && (
+              <div className={styles.stat}>
+                <span className={styles.statValue}>{destroyed}</span>
+                <span className={styles.statLabel}>Sats hit</span>
+              </div>
+            )}
+          </div>
         </div>
-        <div className={styles.scoreLabel}>
-          {lv.isL6 ? 'final score' : 'your score · required to pass'}
+
+        <div className={styles.colB}>
+          <div className={styles.factCard}>
+            <h3 className={styles.factTitle}>From the catalog</h3>
+            <p className={styles.factBody}>{outroFact}</p>
+          </div>
+
+          <div className={styles.actions}>
+            {resultSuccess ? (
+              <button className={styles.primary} onClick={handleNext}>
+                {isLast ? 'Continue' : 'Next level'}
+              </button>
+            ) : (
+              <button className={styles.primary} onClick={handleRetry}>Retry</button>
+            )}
+            <button className={styles.secondary} onClick={handleMenu}>Back to menu</button>
+          </div>
         </div>
       </div>
-
-      <div className={styles.statsRow}>
-        <div className={styles.stat}>
-          <span className={styles.statValue}>{cleared}</span>
-          <span className={styles.statLabel}>Cleared</span>
-        </div>
-        <div className={styles.stat}>
-          <span className={styles.statValue}>{collected}</span>
-          <span className={styles.statLabel}>Collected</span>
-        </div>
-        <div className={styles.stat}>
-          <span className={styles.statValue}>{missed}</span>
-          <span className={styles.statLabel}>Missed</span>
-        </div>
-        {lv.isL3 && (
-          <div className={styles.stat}>
-            <span className={styles.statValue}>{fy1cSaved ? 'yes' : 'no'}</span>
-            <span className={styles.statLabel}>FY-1C saved</span>
-          </div>
-        )}
-        {lv.isL4 && (
-          <div className={styles.stat}>
-            <span className={styles.statValue}>
-              {l4Result === 'saved' ? 'averted' : l4Result === 'deflected' ? 'deflected' : 'collision'}
-            </span>
-            <span className={styles.statLabel}>Collision</span>
-          </div>
-        )}
-        {lv.hardFails.destroyed && (
-          <div className={styles.stat}>
-            <span className={styles.statValue}>{destroyed}</span>
-            <span className={styles.statLabel}>Sats hit</span>
-          </div>
-        )}
-      </div>
-
-      <div className={styles.factCard}>
-        <h3 className={styles.factTitle}>From the catalog</h3>
-        <p className={styles.factBody}>{outroFact}</p>
-      </div>
-
-      {resultSuccess ? (
-        <button className={styles.primary} onClick={handleNext}>
-          {isLast ? 'Continue' : 'Next level'}
-        </button>
-      ) : (
-        <button className={styles.primary} onClick={handleRetry}>Retry</button>
-      )}
-      <button className={styles.secondary} onClick={handleMenu}>Back to menu</button>
     </div>
   );
 }

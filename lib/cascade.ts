@@ -2,7 +2,7 @@ import type { EngineGameState } from '@/lib/types';
 import { spawnCascadeJunk } from '@/lib/spawn';
 import { drawDensityMeter } from '@/lib/render';
 
-const W = 680;
+let W = 680;
 const H = 460;
 
 interface CascadeState {
@@ -32,6 +32,10 @@ export function createCascadeManager() {
       s = makeCascadeState();
       s.levelStartMs = levelStartMs;
     },
+
+    setWidth(w: number): void { W = w; },
+
+    pauseShift(ms: number): void { s.levelStartMs += ms; },
 
     getDensity(): number { return s.density; },
 

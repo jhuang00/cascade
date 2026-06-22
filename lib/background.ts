@@ -262,6 +262,15 @@ let _earthDynamicCache: HTMLCanvasElement | null = null;
 let _starsCache: HTMLCanvasElement | null = null;
 let _bgFrame = 0;
 
+// Drop the cached offscreen layers so they regenerate at the current W/H.
+// Called by the engine when the world width changes on resize.
+export function flushBackgroundCaches(): void {
+  _nebulaCache = null;
+  _earthBodyCache = null;
+  _earthDynamicCache = null;
+  _starsCache = null;
+}
+
 export function drawBackground(
   ctx: CanvasRenderingContext2D,
   W: number,
