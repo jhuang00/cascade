@@ -3,6 +3,7 @@ import { spawnIridium33, spawnCosmos2251, spawnCollisionFragment } from '@/lib/s
 import { drawCinematicSat } from '@/lib/render';
 import { collectFx, explosionFx, sliceFx } from '@/lib/fx';
 import * as Audio from '@/lib/audio';
+import { tensionBGM } from '@/lib/music';
 
 let W = 680;
 const H = 460;
@@ -62,6 +63,7 @@ export function createL4Manager() {
       if (!s.missilePlayed) {
         // Repurpose missile launch sound as "threat detected" tone
         Audio.playMissileLaunch();
+        Audio.startMusic(tensionBGM);
         s.missilePlayed = true;
       }
     } else if (newPhase === 'collision') {

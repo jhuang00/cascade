@@ -3,6 +3,7 @@ import { spawnFY1C, spawnFragment } from '@/lib/spawn';
 import { drawFY1C, drawMissile } from '@/lib/render';
 import { collectFx, explosionFx, sliceFx } from '@/lib/fx';
 import * as Audio from '@/lib/audio';
+import { tensionBGM } from '@/lib/music';
 
 const PHASE_TIMINGS = {
   appear: 10,
@@ -65,7 +66,7 @@ export function createL3Manager() {
       s.phaseWarning = true;
       if (s.fy1c && !s.missile) {
         s.missile = { x: W * 0.32 + Math.random() * W * 0.35, y: 999, speed: 4.2, trail: [] };
-        if (!s.missilePlayed) { Audio.playMissileLaunch(); s.missilePlayed = true; }
+        if (!s.missilePlayed) { Audio.playMissileLaunch(); Audio.startMusic(tensionBGM); s.missilePlayed = true; }
       }
     } else if (newPhase === 'impact') {
       s.phaseIndicator = '';

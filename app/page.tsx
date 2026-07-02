@@ -11,9 +11,10 @@ import styles from './page.module.css';
 export default function MenuPage() {
   const router = useRouter();
   const reset = useGameStore((s) => s.reset);
+  const isMuted = useGameStore((s) => s.isMuted);
+  const setMuted = useGameStore((s) => s.setMuted);
   const [unlockedLevel, setUnlockedLevel] = useState(1);
   const [bestScores, setBestScores] = useState<Record<number, number>>({});
-  const [muted, setMuted] = useState(false);
   const bgCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -77,10 +78,20 @@ export default function MenuPage() {
 
   function toggleMute() {
     Audio.initAudio();
-    const next = !muted;
-    setMuted(next);
-    Audio.setMuted(next);
+    setMuted(!isMuted);
   }
+
+  // M key toggles mute from the menu too.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'm' || e.key === 'M') {
+        Audio.initAudio();
+        setMuted(!useGameStore.getState().isMuted);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [setMuted]);
 
   return (
     <div className={styles.app}>
@@ -90,7 +101,7 @@ export default function MenuPage() {
           <span>Cascade · LEO debris tracking station</span>
         </div>
         <button className={styles.muteBtn} onClick={toggleMute}>
-          Sound: {muted ? 'off' : 'on'}
+          Sound: {isMuted ? 'off' : 'on'}
         </button>
       </div>
 

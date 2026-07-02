@@ -103,10 +103,23 @@ export default function PlayPage({ params }: Props) {
 
   function handleMute() {
     Audio.initAudio();
-    const next = !isMuted;
-    setMuted(next);
-    Audio.setMuted(next);
+    setMuted(!isMuted);
   }
+
+  // Stop any BGM when leaving the play screen.
+  useEffect(() => () => { Audio.stopMusic(); }, []);
+
+  // M key toggles mute from anywhere on the play screen.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'm' || e.key === 'M') {
+        Audio.initAudio();
+        setMuted(!useGameStore.getState().isMuted);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [setMuted]);
 
   return (
     <div className={styles.app}>

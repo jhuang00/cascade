@@ -1,6 +1,18 @@
 'use client';
 import { create } from 'zustand';
 import type { GameDisplayState, GameScreen, L4Result } from '@/lib/types';
+import * as Audio from '@/lib/audio';
+
+const MUTE_KEY = 'cascade-muted';
+
+function loadMuted(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return localStorage.getItem(MUTE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
 
 interface GameStore extends GameDisplayState {
   setScreen: (screen: GameScreen) => void;
@@ -33,10 +45,19 @@ const initialState: GameDisplayState = {
 
 export const useGameStore = create<GameStore>((set) => ({
   ...initialState,
+  isMuted: loadMuted(),
 
   setScreen: (screen) => set({ screen }),
 
-  setMuted: (isMuted) => set({ isMuted }),
+  // Single source of truth for mute: persists the preference and drives the
+  // audio engine's master gain. Components only need to call this.
+  setMuted: (isMuted) => {
+    if (typeof window !== 'undefined') {
+      try { localStorage.setItem(MUTE_KEY, String(isMuted)); } catch { /* ignore */ }
+    }
+    Audio.setMuted(isMuted);
+    set({ isMuted });
+  },
 
   syncFromEngine: (partial) => set((state) => ({ ...state, ...partial })),
 
@@ -49,5 +70,5 @@ export const useGameStore = create<GameStore>((set) => ({
       survivalTime: extras?.survivalTime ?? 0,
     }),
 
-  reset: () => set({ ...initialState }),
+  reset: () => set((s) => ({ ...initialState, isMuted: s.isMuted })),
 }));

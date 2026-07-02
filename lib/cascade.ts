@@ -1,6 +1,7 @@
 import type { EngineGameState } from '@/lib/types';
 import { spawnCascadeJunk } from '@/lib/spawn';
 import { drawDensityMeter } from '@/lib/render';
+import * as Audio from '@/lib/audio';
 
 let W = 680;
 const H = 460;
@@ -10,10 +11,11 @@ interface CascadeState {
   pendingSpawns: number;  // cascade queue: pieces to spawn from missed debris
   frameCount: number;
   levelStartMs: number;
+  criticalPlayed: boolean; // one-shot "control slipping" cue fired once
 }
 
 function makeCascadeState(): CascadeState {
-  return { density: 0, pendingSpawns: 0, frameCount: 0, levelStartMs: 0 };
+  return { density: 0, pendingSpawns: 0, frameCount: 0, levelStartMs: 0, criticalPlayed: false };
 }
 
 export type CascadeManager = ReturnType<typeof createCascadeManager>;
@@ -83,6 +85,12 @@ export function createCascadeManager() {
       // Passive density creep from sheer volume
       if (s.frameCount % 180 === 0 && s.density < 100) {
         s.density = Math.min(100, s.density + 0.3);
+      }
+
+      // One-shot cue when the cascade tips into the critical band.
+      if (!s.criticalPlayed && s.density >= 75) {
+        s.criticalPlayed = true;
+        Audio.playCascade();
       }
     },
 
