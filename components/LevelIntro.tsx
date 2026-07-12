@@ -83,6 +83,13 @@ export default function LevelIntro({ onBegin }: Props) {
     setFrame((f) => Math.min(f + 1, lv!.tutorials.length));
   }
 
+  function handleBack() {
+    Audio.initAudio();
+    Audio.playClick();
+    // Frame 0 is the backstory; backing into it replays the typewriter.
+    setFrame((f) => Math.max(f - 1, 0));
+  }
+
   function handleBegin() {
     Audio.initAudio();
     Audio.playClick();
@@ -106,6 +113,9 @@ export default function LevelIntro({ onBegin }: Props) {
           {displayed}
           {!typingDone && <span className={styles.cursor}>▌</span>}
         </p>
+        <button className={styles.skip} onClick={handleBegin}>
+          Skip briefing ›
+        </button>
       </div>
     );
   }
@@ -130,15 +140,21 @@ export default function LevelIntro({ onBegin }: Props) {
         )}
         <div className={styles.colB}>
           <TutorialCard tutorial={tutorial} />
-          <div className={styles.actions}>
+          <div className={styles.introNav}>
+            <button className={`btn btnGhost ${styles.secondary}`} onClick={handleBack}>
+              ‹ Back
+            </button>
             {isLast ? (
               <button className={`btn btnPrimary ${styles.primary}`} onClick={handleBegin}>Begin</button>
             ) : (
-              <button className={`btn btnPrimary ${styles.primary}`} onClick={handleContinue}>Continue</button>
+              <button className={`btn btnPrimary ${styles.primary}`} onClick={handleContinue}>Next ›</button>
             )}
           </div>
         </div>
       </div>
+      <button className={styles.skip} onClick={handleBegin}>
+        Skip briefing ›
+      </button>
     </div>
   );
 }

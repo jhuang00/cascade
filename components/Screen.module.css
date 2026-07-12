@@ -269,6 +269,41 @@
   align-items: center;
 }
 
+/* Briefing navigation — Back / Next side by side */
+.introNav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.introNav .primary,
+.introNav .secondary {
+  margin-top: 0;
+}
+
+/* Muted skip — quiet text control pinned to the bottom of the overlay */
+.skip {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: none;
+  border: none;
+  font-family: var(--type-mono);
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--phosphor-muted);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: color 180ms ease-out;
+}
+
+.skip:hover {
+  color: var(--phosphor-dim);
+}
+
 /* Short landscape (phone held sideways): two columns, compact type, no scroll. */
 @media (orientation: landscape) and (max-height: 480px) {
   .screen {
