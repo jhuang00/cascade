@@ -1,0 +1,431 @@
+/* Button lab — temporary exploration page. Eight treatments, each pushing
+   past the flat 3-stop gradient: patterned frames, notches, etching, ticks. */
+
+.app {
+  position: relative;
+  min-height: 100dvh;
+  background: var(--void);
+  overflow-y: auto;
+}
+
+.content {
+  position: relative;
+  z-index: 10;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 48px 32px 80px;
+}
+
+.title {
+  font-family: var(--type-display);
+  font-weight: 300;
+  font-size: 22px;
+  letter-spacing: 0.4em;
+  color: var(--phosphor);
+}
+
+.subtitle {
+  font-family: var(--type-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--phosphor-dim);
+  text-transform: uppercase;
+  margin: 10px 0 36px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+  gap: 22px;
+}
+
+@media (max-width: 560px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+.tile {
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: rgba(5, 7, 11, 0.55);
+  backdrop-filter: blur(4px);
+  padding: 18px 20px 26px;
+}
+
+.tileHead {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.tileId {
+  font-family: var(--type-mono);
+  font-size: 11px;
+  color: var(--amber);
+  letter-spacing: 0.2em;
+}
+
+.tileName {
+  font-family: var(--type-display);
+  font-weight: 400;
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  color: var(--phosphor);
+  text-transform: uppercase;
+}
+
+.tileNote {
+  font-family: var(--type-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--phosphor-muted);
+  text-transform: uppercase;
+  margin: 6px 0 20px;
+}
+
+.stage {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+/* ── shared button base ── */
+.btn {
+  position: relative;
+  font-family: var(--type-display);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--phosphor);
+  background: none;
+  border: none;
+  padding: 16px 38px 16px calc(38px + 0.4em);
+  cursor: pointer;
+  transition: color 180ms ease-out, box-shadow 180ms ease-out,
+    border-color 180ms ease-out, background 180ms ease-out,
+    transform 120ms ease-out, filter 180ms ease-out;
+}
+
+.label {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ════ A · Notched plaque — clipped corners, double frame, engraved ════ */
+.vA {
+  --cut: 11px;
+  clip-path: polygon(
+    var(--cut) 0, calc(100% - var(--cut)) 0, 100% var(--cut),
+    100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%,
+    var(--cut) 100%, 0 calc(100% - var(--cut)), 0 var(--cut)
+  );
+  background:
+    radial-gradient(140% 120% at 50% -20%, rgba(255, 181, 71, 0.12), transparent 55%),
+    linear-gradient(165deg, #171a1f 0%, #0c0e13 55%, #131017 100%);
+  box-shadow: inset 0 0 0 1px rgba(217, 154, 60, 0.75);
+  color: var(--amber);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.9);
+}
+
+.vA::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  clip-path: polygon(
+    8px 0, calc(100% - 8px) 0, 100% 8px,
+    100% calc(100% - 8px), calc(100% - 8px) 100%,
+    8px 100%, 0 calc(100% - 8px), 0 8px
+  );
+  box-shadow: inset 0 0 0 1px rgba(232, 228, 212, 0.18);
+  pointer-events: none;
+}
+
+.vA:hover {
+  box-shadow: inset 0 0 0 1px var(--amber);
+  color: #ffd28a;
+}
+
+.vA:active { transform: translateY(1px); filter: brightness(0.92); }
+
+.vA.ghost {
+  color: var(--phosphor-dim);
+  box-shadow: inset 0 0 0 1px rgba(232, 228, 212, 0.3);
+  background: linear-gradient(165deg, rgba(18, 22, 28, 0.8), rgba(8, 10, 14, 0.85));
+}
+.vA.ghost:hover { color: var(--amber); box-shadow: inset 0 0 0 1px var(--amber-soft); }
+
+/* ════ B · Etched brass — brushed-metal border pattern, matte center ════ */
+.vB {
+  border: 3px solid transparent;
+  border-image: repeating-linear-gradient(
+    45deg,
+    #6e5224 0 2px, #c9a961 2px 3px, #8a6a33 3px 5px, #e8cb8a 5px 6px
+  ) 3;
+  background:
+    linear-gradient(180deg, rgba(232, 228, 212, 0.06), transparent 30%),
+    #11141a;
+  color: var(--phosphor);
+}
+
+.vB:hover {
+  border-image: repeating-linear-gradient(
+    45deg,
+    #8a6a33 0 2px, #ffd28a 2px 3px, #b08a45 3px 5px, #ffe9c0 5px 6px
+  ) 3;
+  color: var(--amber);
+  box-shadow: 0 0 16px rgba(255, 181, 71, 0.12);
+}
+
+.vB:active { transform: translateY(1px); filter: brightness(0.9); }
+
+.vB.ghost {
+  border-image: repeating-linear-gradient(
+    45deg,
+    #3a3a3c 0 2px, #77746a 2px 3px, #4a4842 3px 5px, #9a968a 5px 6px
+  ) 3;
+  color: var(--phosphor-dim);
+}
+.vB.ghost:hover { color: var(--phosphor); }
+
+/* ════ C · Flat band + brackets — zero gradient, brackets breathe ════ */
+.vC {
+  background: var(--amber);
+  color: var(--void);
+}
+
+.vC::before,
+.vC::after {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  transition: inset 180ms ease-out, border-color 180ms ease-out;
+  pointer-events: none;
+}
+.vC::before {
+  top: -5px; left: -5px;
+  border-top: 1px solid var(--amber-soft);
+  border-left: 1px solid var(--amber-soft);
+}
+.vC::after {
+  bottom: -5px; right: -5px;
+  border-bottom: 1px solid var(--amber-soft);
+  border-right: 1px solid var(--amber-soft);
+}
+
+.vC:hover { background: #ffc668; }
+.vC:hover::before { top: -9px; left: -9px; border-color: var(--amber); }
+.vC:hover::after { bottom: -9px; right: -9px; border-color: var(--amber); }
+.vC:active { transform: translateY(1px); }
+
+.vC.ghost {
+  background: transparent;
+  color: var(--phosphor);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.vC.ghost::before { border-color: rgba(232, 228, 212, 0.4); }
+.vC.ghost::after { border-color: rgba(232, 228, 212, 0.4); }
+.vC.ghost:hover { color: var(--amber); box-shadow: inset 0 0 0 1px var(--amber-soft); }
+
+/* ════ D · Tick frame — instrument tick-mark border, diamond flanks ════ */
+.vD {
+  background: rgba(9, 12, 17, 0.85);
+  color: var(--phosphor);
+}
+
+.vD::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, rgba(217, 154, 60, 0.9) 0 7px, transparent 7px 13px) top / 100% 1px no-repeat,
+    repeating-linear-gradient(90deg, rgba(217, 154, 60, 0.9) 0 7px, transparent 7px 13px) bottom / 100% 1px no-repeat,
+    repeating-linear-gradient(0deg, rgba(217, 154, 60, 0.9) 0 5px, transparent 5px 10px) left / 1px 100% no-repeat,
+    repeating-linear-gradient(0deg, rgba(217, 154, 60, 0.9) 0 5px, transparent 5px 10px) right / 1px 100% no-repeat;
+  transition: filter 180ms ease-out;
+}
+
+.vD .label::before,
+.vD .label::after {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border: 1px solid var(--amber);
+  transform: rotate(45deg);
+  display: inline-block;
+}
+.vD .label::before { margin-right: 16px; }
+.vD .label::after { margin-left: 16px; }
+
+.vD:hover {
+  color: var(--amber);
+  box-shadow: 0 0 18px rgba(255, 181, 71, 0.1);
+}
+.vD:hover::before { filter: brightness(1.4); }
+.vD:hover .label::before,
+.vD:hover .label::after { background: var(--amber); }
+.vD:active { transform: translateY(1px); }
+
+.vD.ghost { color: var(--phosphor-dim); }
+.vD.ghost::before { filter: saturate(0.2) brightness(0.8); }
+.vD.ghost .label::before,
+.vD.ghost .label::after { border-color: var(--phosphor-muted); }
+.vD.ghost:hover { color: var(--phosphor); }
+
+/* ════ E · Console key — deep bevel, radial top-light, heavy press ════ */
+.vE {
+  border-radius: 3px;
+  background:
+    radial-gradient(130% 100% at 28% -12%, rgba(255, 255, 255, 0.3), transparent 42%),
+    linear-gradient(180deg, #f7b84f 0%, #dd9832 58%, #b47420 100%);
+  border: 1px solid #7c5417;
+  color: var(--void);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28);
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.32),
+    inset 0 -3px 6px rgba(80, 40, 0, 0.4),
+    0 3px 0 #5f3f10,
+    0 7px 14px rgba(0, 0, 0, 0.5);
+}
+
+.vE:hover { filter: brightness(1.07); }
+
+.vE:active {
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 2px 5px rgba(80, 40, 0, 0.4),
+    0 0 0 #5f3f10,
+    0 2px 5px rgba(0, 0, 0, 0.4);
+}
+
+.vE.ghost {
+  background:
+    radial-gradient(130% 100% at 28% -12%, rgba(255, 255, 255, 0.12), transparent 42%),
+    linear-gradient(180deg, #2b3442 0%, #1a212d 58%, #10151f 100%);
+  border-color: #0a0d13;
+  color: var(--phosphor);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+  box-shadow:
+    inset 0 1px 2px rgba(232, 228, 212, 0.18),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.45),
+    0 3px 0 #05070b,
+    0 7px 14px rgba(0, 0, 0, 0.5);
+}
+.vE.ghost:hover { color: var(--amber); }
+.vE.ghost:active {
+  transform: translateY(3px);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5), 0 0 0 #05070b;
+}
+
+/* ════ F · Scanline glass — translucent, line pattern, rim light ════ */
+.vF {
+  background:
+    repeating-linear-gradient(0deg, rgba(232, 228, 212, 0.045) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, rgba(24, 32, 44, 0.65), rgba(5, 7, 11, 0.85));
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 181, 71, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 181, 71, 0.55),
+    0 0 22px rgba(255, 181, 71, 0.07);
+  color: var(--amber);
+  text-shadow: 0 0 8px rgba(255, 181, 71, 0.35);
+}
+
+.vF:hover {
+  border-color: rgba(255, 181, 71, 0.6);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 214, 150, 0.9),
+    0 0 28px rgba(255, 181, 71, 0.16);
+}
+.vF:active { transform: translateY(1px); filter: brightness(0.92); }
+
+.vF.ghost {
+  border-color: rgba(232, 228, 212, 0.2);
+  box-shadow: inset 0 1px 0 rgba(232, 228, 212, 0.3);
+  color: var(--phosphor-dim);
+  text-shadow: none;
+}
+.vF.ghost:hover { color: var(--phosphor); border-color: rgba(232, 228, 212, 0.45); }
+
+/* ════ G · Ceremonial seal — offset double frame, chevron flanks ════ */
+.vG {
+  background: rgba(7, 9, 14, 0.72);
+  border: 1px solid rgba(232, 228, 212, 0.28);
+  color: var(--phosphor);
+}
+
+.vG::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(217, 154, 60, 0.55);
+  transition: border-color 180ms ease-out, box-shadow 180ms ease-out;
+  pointer-events: none;
+}
+
+.vG .label::before,
+.vG .label::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-top: 1px solid var(--amber-soft);
+  border-right: 1px solid var(--amber-soft);
+  transform: rotate(45deg);
+  display: inline-block;
+  transition: border-color 180ms ease-out;
+}
+.vG .label::before { margin-right: 18px; transform: rotate(-135deg); }
+.vG .label::after { margin-left: 18px; }
+
+.vG:hover { color: var(--amber); }
+.vG:hover::before {
+  border-color: var(--amber);
+  box-shadow: 0 0 14px rgba(255, 181, 71, 0.18) inset;
+}
+.vG:hover .label::before,
+.vG:hover .label::after { border-color: var(--amber); }
+.vG:active { transform: translateY(1px); }
+
+.vG.ghost { color: var(--phosphor-dim); border-color: rgba(232, 228, 212, 0.16); }
+.vG.ghost::before { border-color: rgba(232, 228, 212, 0.2); }
+.vG.ghost .label::before,
+.vG.ghost .label::after { border-color: var(--phosphor-muted); }
+.vG.ghost:hover { color: var(--phosphor); }
+
+/* ════ H · Amber inlay — dark body, recessed amber channel border ════ */
+.vH {
+  background:
+    radial-gradient(120% 140% at 50% -30%, rgba(255, 181, 71, 0.08), transparent 50%),
+    #0d1119;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.9),
+    inset 0 0 0 2px rgba(255, 181, 71, 0.6),
+    inset 0 0 0 3px rgba(0, 0, 0, 0.85),
+    inset 0 0 0 4px rgba(255, 220, 160, 0.14);
+  color: var(--amber);
+}
+
+.vH:hover {
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.9),
+    inset 0 0 0 2px var(--amber),
+    inset 0 0 0 3px rgba(0, 0, 0, 0.85),
+    inset 0 0 0 4px rgba(255, 220, 160, 0.3),
+    0 0 20px rgba(255, 181, 71, 0.14);
+  color: #ffd28a;
+}
+.vH:active { transform: translateY(1px); filter: brightness(0.9); }
+
+.vH.ghost {
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.9),
+    inset 0 0 0 2px rgba(232, 228, 212, 0.28),
+    inset 0 0 0 3px rgba(0, 0, 0, 0.85),
+    inset 0 0 0 4px rgba(232, 228, 212, 0.08);
+  color: var(--phosphor-dim);
+}
+.vH.ghost:hover { color: var(--phosphor); }
