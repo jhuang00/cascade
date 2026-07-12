@@ -46,7 +46,16 @@ export default function MenuPage() {
     syncSize();
 
     let rafId: number;
+    let lastMs = 0;
     function loop() {
+      // Ambient menu backdrop: 30fps is imperceptible for slow star drift
+      // and halves the idle energy cost (quarters it on 120Hz displays).
+      const now = performance.now();
+      if (now - lastMs < 32) {
+        rafId = requestAnimationFrame(loop);
+        return;
+      }
+      lastMs = now;
       ctx!.save();
       ctx!.scale(canvas!.width / W, canvas!.height / H);
       drawBackground(ctx!, W, H, stars, nebulae, earth, orbitArcs);

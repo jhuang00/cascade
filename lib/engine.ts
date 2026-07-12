@@ -97,10 +97,33 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
 
   let gs = makeEngineGameState();
   let rafId = 0;
+  let rafRunning = false;
+  let lastFrameMs = 0;
   let frameCount = 0;
   let levelEnded = false;
   let paused = false;
   let pauseStartMs = 0;
+
+  // Cap the simulation at ~60fps: physics are tuned per-frame (gravity
+  // 0.18/frame), so on 120Hz displays an uncapped loop both doubles the
+  // energy cost and runs the game at 2x speed.
+  const FRAME_MIN_MS = 15.5;
+
+  // Anything still moving on screen after gameplay stops (label fades,
+  // explosion flashes, reentry burnups) that justifies keeping frames going.
+  function fxActive(): boolean {
+    return gs.halves.length > 0 || gs.particles.length > 0 || gs.labels.length > 0 ||
+      gs.trail.length > 0 || gs.flashes.length > 0 || gs.rings.length > 0 ||
+      gs.reentries.length > 0 || gs.screenFlash > 0 || gs.shake > 0;
+  }
+
+  // Restart the loop after an idle suspension (level start, unpause).
+  function wake(): void {
+    if (rafRunning) return;
+    rafRunning = true;
+    lastFrameMs = 0;
+    rafId = requestAnimationFrame(loop);
+  }
 
   function pushDisplay(): void {
     const lv = LEVELS[gs.currentLevelIdx];
@@ -595,6 +618,14 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
   let lastTrailY: number | null = null;
 
   function loop(): void {
+    // 60fps cap — skip this refresh tick entirely if it came too soon.
+    const nowMs = performance.now();
+    if (nowMs - lastFrameMs < FRAME_MIN_MS) {
+      rafId = requestAnimationFrame(loop);
+      return;
+    }
+    lastFrameMs = nowMs;
+
     frameCount++;
     // Adapt world width to the current canvas buffer (only reallocates on change).
     rebuildForSize();
@@ -650,7 +681,15 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
 
     renderScanLines();
     ctx.restore();
-    rafId = requestAnimationFrame(loop);
+
+    // Idle suspension: with gameplay stopped (or paused) and no FX in
+    // flight, the frame just drawn is static — keep it and stop scheduling.
+    // wake() restarts the loop on level start / unpause.
+    if ((gs.playing && !paused) || fxActive()) {
+      rafId = requestAnimationFrame(loop);
+    } else {
+      rafRunning = false;
+    }
   }
 
   const removeInput = attachInput(canvas, () => ({ w: W, h: H }), {
@@ -678,7 +717,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
     },
   });
 
-  rafId = requestAnimationFrame(loop);
+  wake();
 
   return {
     startLevel(levelIdx: number): void {
@@ -698,6 +737,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
       // ambient bed (cinematic levels switch to tension at their missile beat).
       Audio.startMusic(lv?.isL6 ? tensionBGM : ambientBGM);
       cbs.onDisplayUpdate({ screen: 'playing', currentLevelIdx: levelIdx });
+      wake();
     },
 
     setMuted(m: boolean): void {
@@ -716,6 +756,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
         l3.pauseShift(d);
         l4.pauseShift(d);
         cascade.pauseShift(d);
+        wake();
       }
     },
 
