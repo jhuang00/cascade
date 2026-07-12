@@ -58,6 +58,68 @@ button {
   font-family: inherit;
 }
 
+/* ── Premium control buttons — sci-fi luxury, game-wide ──
+   Thin metallic edges + subtle sheen gradients (user-authorized deviation
+   from the brief's flat-chrome rule, buttons only). Size/tracking are
+   tunable per use via custom properties. */
+.btn {
+  font-family: var(--type-display);
+  font-weight: 500;
+  font-size: var(--btn-fs, 11px);
+  letter-spacing: var(--btn-ls, 0.4em);
+  text-transform: uppercase;
+  padding: var(--btn-pad, 12px 30px);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: color 180ms ease-out, border-color 180ms ease-out,
+    box-shadow 180ms ease-out, background 180ms ease-out, transform 120ms ease-out;
+}
+
+.btnPrimary {
+  color: var(--void);
+  background: linear-gradient(180deg, #ffc668 0%, #f0a63c 55%, #d98f2e 100%);
+  border: 1px solid rgba(255, 220, 160, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -1px 0 rgba(60, 30, 0, 0.3);
+}
+
+.btnPrimary:hover,
+.btnPrimary:focus-visible {
+  background: linear-gradient(180deg, #ffd28a 0%, #f5b04a 55%, #e09a35 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1px 0 rgba(60, 30, 0, 0.3),
+    0 0 18px var(--amber-glow);
+  outline: none;
+}
+
+.btnPrimary:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 6px rgba(60, 30, 0, 0.35);
+}
+
+.btnGhost {
+  color: var(--phosphor);
+  background: linear-gradient(180deg, rgba(31, 44, 61, 0.55) 0%, rgba(5, 7, 11, 0.75) 100%);
+  border: 1px solid rgba(232, 228, 212, 0.28);
+  box-shadow: inset 0 1px 0 rgba(232, 228, 212, 0.12);
+}
+
+.btnGhost:hover,
+.btnGhost:focus-visible {
+  color: var(--amber);
+  border-color: var(--amber-soft);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 214, 150, 0.15),
+    0 0 12px var(--amber-glow);
+  outline: none;
+}
+
+.btnGhost:active {
+  transform: translateY(1px);
+}
+
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }

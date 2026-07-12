@@ -132,8 +132,8 @@ export default function PlayPage({ params }: Props) {
         <div className={styles.titleRight}>
           <span className={styles.metLabel}>Mission elapsed:</span>
           <span className={styles.metValue}>{met}</span>
-          <button className={styles.muteBtn} onClick={handleMute}>
-            Sound: {isMuted ? 'off' : 'on'}
+          <button className={`btn btnGhost ${styles.muteBtn}`} onClick={handleMute}>
+            Sound [ {isMuted ? 'OFF' : 'ON'} ]
           </button>
         </div>
       </div>
@@ -226,7 +226,7 @@ export default function PlayPage({ params }: Props) {
             <p className={styles.completeBody} style={{ marginTop: '0.5rem', opacity: 0.6, fontSize: '0.85em' }}>
               You have just played through 68 years of inaction.
             </p>
-            <button className={styles.completeBtn} onClick={() => router.push('/')}>Back to start</button>
+            <button className={`btn btnPrimary ${styles.completeBtn}`} onClick={() => router.push('/')}>Back to start</button>
           </div>
         )}
       </div>

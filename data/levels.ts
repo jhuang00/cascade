@@ -22,6 +22,10 @@ export const LEVELS: LevelConfig[] = [
     spawn: { junk: 55, active: 0, rare: 0 },
     passScore: 150,
     hardFails: { missed: 12 },
+    card: {
+      blurb: 'The first space age leaves its hardware behind. 5,000 catalogued objects by 1990. Nobody is counting yet.',
+      newLine: 'NEW: SLICE',
+    },
     outroFact: 'Vanguard 1, launched in 1958, is the oldest human-made object still in orbit. It will remain there for an estimated 240 more years. By 1990 there were approximately 5,000 catalogued objects in orbit.',
   },
   {
@@ -50,6 +54,10 @@ export const LEVELS: LevelConfig[] = [
     spawn: { junk: 45, active: 200, rare: 380 },
     passScore: 250,
     hardFails: { missed: 15, destroyed: 3 },
+    card: {
+      blurb: 'Rocket stages cook off in vacuum and explode silently. 190 known breakups between 1961 and 2006.',
+      newLine: 'NEW: FRAGMENTATION · RARE ARTIFACTS',
+    },
     outroFact: 'Between 1961 and 2006, there were 190 known satellite breakups in orbit. Most were caused by leftover fuel in spent rocket stages exploding years after their missions ended. Some of those stages are still up there today — the same kind that broke up the others.',
   },
   {
@@ -73,6 +81,10 @@ export const LEVELS: LevelConfig[] = [
     spawn: { junk: 55, active: 220, rare: 400 },
     passScore: 400,
     hardFails: { destroyed: 3 },
+    card: {
+      blurb: 'January 11, 2007. A direct-ascent missile meets Fengyun-1C at 865 km. 3,500+ catalogued fragments.',
+      newLine: 'NEW: CINEMATIC EVENT',
+    },
     outroFact: "China's 2007 ASAT test against Fengyun-1C generated over 3,500 catalogued debris fragments. Estimates suggest over a million pieces too small to track. Nineteen years later, more than 3,000 of those catalogued fragments are still in orbit. The debris spread from 200 km to 4,000 km in altitude, crossing the paths of nearly every active LEO satellite. The International Space Station has performed multiple emergency maneuvers to avoid this debris cloud.",
     isL3: true,
   },
@@ -97,6 +109,10 @@ export const LEVELS: LevelConfig[] = [
     spawn: { junk: 50, active: 210, rare: 370 },
     passScore: 600,
     hardFails: { destroyed: 2 },
+    card: {
+      blurb: 'Iridium 33 and Cosmos 2251 converge over Siberia at 11.7 km/s. 1,632 catalogued fragments.',
+      newLine: 'NEW: PREDICTIVE COLLISION',
+    },
     outroFact: "On February 10, 2009, the defunct Russian satellite Cosmos 2251 collided with the operational American satellite Iridium 33 at a relative velocity of 11.7 km/s — about 26,000 mph. It was the first confirmed accidental collision between two intact satellites. The collision produced 1,632 catalogued fragments. Most are still in orbit. Cosmos 2251 had been defunct since 1995 — a corpse drifting for 14 years before it killed a working satellite.",
     isL4: true,
   },
@@ -121,6 +137,10 @@ export const LEVELS: LevelConfig[] = [
     spawn: { junk: 38, active: 90, rare: 230 },
     passScore: 500,
     hardFails: { destroyed: 5 },
+    card: {
+      blurb: 'Over 10,000 Starlink satellites operational. The debris of 1982 and 2007 mixes with the new shells.',
+      newLine: 'NEW: DENSITY DISCRIMINATION',
+    },
     outroFact: "As of 2026, over 14,500 active satellites orbit Earth. SpaceX's Starlink operates more than 10,400 of them — more than every other operator combined. Two major breakups occurred in 2024 alone: a Long March 6A upper stage produced 700+ fragments in August, and Intelsat 33e fragmented in geostationary orbit in October producing 1,104+ fragments. The orbits are filling. The ASAT debris from China (2007) and Russia (2021) is still present, mixing with the new constellations.",
     isL5: true,
   },
@@ -145,6 +165,10 @@ export const LEVELS: LevelConfig[] = [
     spawn: { junk: 42, active: 180, rare: 320 },
     passScore: 1,
     hardFails: {},
+    card: {
+      blurb: 'The intact population already exceeds the runaway threshold at nearly all altitudes between 520 and 1,000 km.',
+      newLine: 'SURVIVAL · NO WIN CONDITION',
+    },
     outroFact: "The European Space Agency's ClearSpace-1 mission, planned for 2026, will be the first attempt in history to actively remove a single piece of orbital debris. The contract is €86 million. Objects in orbit larger than 1 cm: over 1,200,000. You have just played through 68 years of inaction.",
     isL6: true,
   },

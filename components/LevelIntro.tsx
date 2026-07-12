@@ -132,9 +132,9 @@ export default function LevelIntro({ onBegin }: Props) {
           <TutorialCard tutorial={tutorial} />
           <div className={styles.actions}>
             {isLast ? (
-              <button className={styles.primary} onClick={handleBegin}>Begin</button>
+              <button className={`btn btnPrimary ${styles.primary}`} onClick={handleBegin}>Begin</button>
             ) : (
-              <button className={styles.primary} onClick={handleContinue}>Continue</button>
+              <button className={`btn btnPrimary ${styles.primary}`} onClick={handleContinue}>Continue</button>
             )}
           </div>
         </div>

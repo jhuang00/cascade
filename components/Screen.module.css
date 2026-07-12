@@ -95,47 +95,18 @@
   margin: 0 0 24px;
 }
 
-/* Primary action — amber band, void text */
+/* Actions use the global premium classes (btn btnPrimary / btn btnGhost);
+   these module classes carry only spacing and per-context metrics. */
 .primary {
-  font-family: var(--type-display);
-  font-weight: 500;
-  background: var(--amber);
-  color: var(--void);
-  border: none;
-  padding: 12px 32px;
-  border-radius: 2px;
-  font-size: 11px;
-  letter-spacing: 0.4em;
-  text-transform: uppercase;
-  cursor: pointer;
   margin-top: 20px;
-  transition: background 180ms ease;
 }
 
-.primary:hover {
-  background: var(--amber-soft);
-}
-
-/* Ghost action */
 .secondary {
-  font-family: var(--type-mono);
-  font-weight: 400;
-  background: transparent;
-  color: var(--phosphor-dim);
-  border: 1px solid var(--rule);
-  padding: 9px 20px;
-  border-radius: 2px;
-  font-size: 10px;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  cursor: pointer;
   margin-top: 12px;
-  transition: color 180ms ease, border-color 180ms ease;
-}
-
-.secondary:hover {
-  color: var(--amber);
-  border-color: var(--amber-soft);
+  font-family: var(--type-mono);
+  --btn-fs: 10px;
+  --btn-ls: 0.3em;
+  --btn-pad: 9px 20px;
 }
 
 /* Outro-specific */
@@ -343,6 +314,6 @@
   .factBody { font-size: 11px; line-height: 1.45; }
   .epilogue { font-size: 10px; margin-top: 6px; }
 
-  .primary { margin-top: 0; padding: 9px 20px; }
+  .primary { margin-top: 0; --btn-pad: 9px 20px; }
   .secondary { margin-top: 0; }
 }

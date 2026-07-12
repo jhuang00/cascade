@@ -164,6 +164,10 @@ export interface LevelConfig {
   hardFails: HardFails;
   outroFact: string;
   junkSpeed?: number; // launch-velocity multiplier for junk (default 1)
+  card: {
+    blurb: string;    // mission-card INFORMATION copy (catalog voice)
+    newLine?: string; // "NEW: …" mechanics line
+  };
   isL3?: boolean;
   isL4?: boolean;
   isL5?: boolean;

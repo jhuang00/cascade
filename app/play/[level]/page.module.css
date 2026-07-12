@@ -62,21 +62,12 @@
 .metLabel { color: var(--phosphor-muted); }
 .metValue { color: var(--phosphor); }
 
+/* Premium ghost (global classes) with compact metrics for the title bar */
 .muteBtn {
-  background: transparent;
-  color: var(--phosphor-dim);
-  border: 1px solid var(--rule);
-  padding: 4px 10px;
-  border-radius: 2px;
-  font-size: 11px;
-  cursor: pointer;
-  letter-spacing: 0.05em;
-  transition: color 180ms ease, border-color 180ms ease;
-}
-
-.muteBtn:hover {
-  color: var(--amber);
-  border-color: var(--amber-soft);
+  font-family: var(--type-mono);
+  --btn-fs: 10px;
+  --btn-ls: 0.2em;
+  --btn-pad: 5px 12px;
 }
 
 /* Fills the leftover column space; centers the letterboxed game box. */
@@ -258,22 +249,10 @@
   margin-bottom: 24px;
 }
 
+/* Premium primary (global classes); no extra metrics needed */
 .completeBtn {
-  font-family: var(--type-display);
-  font-weight: 500;
-  background: var(--amber);
-  color: var(--void);
-  border: none;
-  padding: 12px 32px;
-  border-radius: 2px;
-  font-size: 11px;
-  letter-spacing: 0.4em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background 180ms ease;
+  margin-top: 4px;
 }
-
-.completeBtn:hover { background: var(--amber-soft); }
 
 .help {
   width: 100%;

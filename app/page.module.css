@@ -1,6 +1,6 @@
 /* Main menu — ceremonial register (design-refs/cascade-visual.md §9.1).
-   Anchored composition: wordmark upper-left, CTA lower-left, signature
-   lower-right. The Scene backdrop is the image; negative space is the layout. */
+   Fresh state: centered Begin-mission control. With progress (or preview):
+   mission-card row from the mockup's select screen. */
 
 .app {
   position: relative;
@@ -10,36 +10,25 @@
   background: var(--void);
 }
 
-/* Utility control — top-right anchor */
+/* Utility control — top-right anchor (premium ghost, small metrics) */
 .soundToggle {
   position: absolute;
   top: 18px;
   right: 18px;
   z-index: 20;
-  background: rgba(5, 7, 11, 0.55);
-  border: 1px solid var(--rule);
-  border-radius: 2px;
-  color: var(--phosphor-dim);
+  --btn-fs: 10px;
+  --btn-ls: 0.3em;
+  --btn-pad: 8px 14px;
   font-family: var(--type-mono);
-  font-size: 10px;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  padding: 8px 14px;
-  cursor: pointer;
-  transition: color 180ms ease, border-color 180ms ease;
 }
 
-.soundToggle:hover {
-  color: var(--amber);
-  border-color: var(--amber-soft);
-}
-
-/* Wordmark — 8vh from top, 6vw from left */
+/* Wordmark — 8vh/6vw on the fresh screen; compact top strip in card views */
 .wordmarkWrap {
   position: absolute;
   top: 8vh;
   left: 6vw;
   z-index: 10;
+  transition: top 240ms ease, left 240ms ease;
 }
 
 .wordmark {
@@ -50,6 +39,21 @@
   margin-right: -0.55em;
   color: var(--phosphor);
   line-height: 1;
+  transition: font-size 240ms ease;
+}
+
+.wordmarkCompact {
+  top: 4vh;
+  left: 6vw;
+}
+
+.wordmarkCompact .wordmark {
+  font-size: clamp(20px, 2.6vw, 34px);
+}
+
+.wordmarkCompact .subtitle {
+  margin-top: 10px;
+  width: clamp(200px, 18vw, 300px);
 }
 
 .subtitle {
@@ -75,57 +79,86 @@
   white-space: nowrap;
 }
 
-/* Menu — 16vh from bottom, 6vw from left; ring-bullet items */
-.menuNav {
+/* ── Fresh state: ceremonial center CTA ── */
+.freshCenter {
   position: absolute;
-  bottom: 16vh;
-  left: 6vw;
+  inset: 0;
   z-index: 10;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  min-width: 260px;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
 }
 
-.menuItem {
-  background: none;
-  border: none;
-  color: var(--phosphor);
-  font-family: var(--type-display);
-  font-size: 18px;
-  font-weight: 300;
-  text-align: left;
-  padding: 10px 0 10px 28px;
-  cursor: pointer;
+/* Bracketed frame around the hero control */
+.ctaFrame {
   position: relative;
-  letter-spacing: 0.02em;
-  transition: color 180ms ease;
+  padding: 14px;
 }
 
-.menuItem::before {
-  content: "";
+.ctaBracketTL, .ctaBracketTR, .ctaBracketBL, .ctaBracketBR {
   position: absolute;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
+.ctaBracketTL { top: 0; left: 0; border-top: 1px solid var(--amber-soft); border-left: 1px solid var(--amber-soft); }
+.ctaBracketTR { top: 0; right: 0; border-top: 1px solid var(--amber-soft); border-right: 1px solid var(--amber-soft); }
+.ctaBracketBL { bottom: 0; left: 0; border-bottom: 1px solid var(--amber-soft); border-left: 1px solid var(--amber-soft); }
+.ctaBracketBR { bottom: 0; right: 0; border-bottom: 1px solid var(--amber-soft); border-right: 1px solid var(--amber-soft); }
+
+.heroCta {
+  --btn-fs: 14px;
+  --btn-ls: 0.45em;
+  --btn-pad: 18px 54px 18px calc(54px + 0.45em);
+}
+
+.ghostCta {
+  --btn-fs: 10px;
+  --btn-ls: 0.35em;
+  --btn-pad: 10px 24px;
+}
+
+/* ── Card views ── */
+.cardArea {
+  position: absolute;
+  top: 17vh;
+  bottom: 15vh;
   left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 12px;
-  height: 12px;
-  border: 1px solid var(--phosphor-dim);
-  border-radius: 50%;
-  transition: all 180ms ease;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--phosphor-muted) transparent;
 }
 
-.menuItem:hover,
-.menuItem:focus-visible {
-  color: var(--amber);
-  outline: none;
+/* margin:auto centers the row when it fits, allows scroll when it doesn't */
+.cardRow {
+  display: flex;
+  gap: clamp(16px, 2.4vw, 32px);
+  align-items: center;
+  margin: auto;
+  padding: 0 6vw;
 }
 
-.menuItem:hover::before,
-.menuItem:focus-visible::before {
-  border-color: var(--amber);
-  background: var(--amber);
-  box-shadow: 0 0 8px var(--amber-glow);
+.actionsRow {
+  position: absolute;
+  bottom: 5.5vh;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.actionBtn {
+  --btn-fs: 11px;
+  --btn-pad: 12px 30px;
+  white-space: nowrap;
 }
 
 /* Footer signature — lower-right anchor */
@@ -141,13 +174,16 @@
   text-transform: uppercase;
 }
 
+@media (max-width: 900px) {
+  /* Signature would collide with the centered actions row */
+  .signature {
+    display: none;
+  }
+}
+
 @media (max-width: 600px) {
   .wordmark {
     letter-spacing: 0.35em;
     margin-right: -0.35em;
-  }
-  .signature {
-    right: auto;
-    left: 6vw;
   }
 }

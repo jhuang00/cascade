@@ -95,10 +95,10 @@ export default function LevelOutro({ onRetry }: Props) {
             <p className={styles.epilogue}>There is no mission 07</p>
 
             <div className={styles.actions}>
-              <button className={styles.primary} onClick={() => { Audio.playClick(); setScreen('complete'); }}>
+              <button className={`btn btnPrimary ${styles.primary}`} onClick={() => { Audio.playClick(); setScreen('complete'); }}>
                 Continue
               </button>
-              <button className={styles.secondary} onClick={() => { Audio.playClick(); router.push('/'); }}>
+              <button className={`btn btnGhost ${styles.secondary}`} onClick={() => { Audio.playClick(); router.push('/'); }}>
                 ‹ Menu
               </button>
             </div>
@@ -237,13 +237,13 @@ export default function LevelOutro({ onRetry }: Props) {
 
           <div className={styles.actions}>
             {resultSuccess ? (
-              <button className={styles.primary} onClick={handleNext}>
+              <button className={`btn btnPrimary ${styles.primary}`} onClick={handleNext}>
                 {isLast ? 'Continue' : 'Next mission ›'}
               </button>
             ) : (
-              <button className={styles.primary} onClick={handleRetry}>Retry</button>
+              <button className={`btn btnPrimary ${styles.primary}`} onClick={handleRetry}>Retry</button>
             )}
-            <button className={styles.secondary} onClick={handleMenu}>‹ Menu</button>
+            <button className={`btn btnGhost ${styles.secondary}`} onClick={handleMenu}>‹ Menu</button>
           </div>
         </div>
       </div>
