@@ -1,6 +1,7 @@
 import type { EngineGameState } from '@/lib/types';
 import { spawnCascadeJunk } from '@/lib/spawn';
 import { drawDensityMeter } from '@/lib/render';
+import { CASCADE } from '@/data/tuning';
 import * as Audio from '@/lib/audio';
 
 let W = 680;
@@ -23,9 +24,9 @@ export function createCascadeManager() {
   let s = makeCascadeState();
 
   function currentSpawnInterval(): number {
-    // Start at 42 frames (~0.7s), accelerate every 10s until floored at 18
+    // Start at ~0.7s per spawn, accelerate every 10s until the floor
     const speedupSteps = Math.floor(s.frameCount / 600);
-    return Math.max(18, 42 - speedupSteps * 2);
+    return Math.max(CASCADE.spawnIntervalFloor, CASCADE.spawnIntervalStart - speedupSteps * CASCADE.spawnIntervalStep);
   }
 
   return {
@@ -46,22 +47,22 @@ export function createCascadeManager() {
 
     // Called by engine when junk falls off-screen (miss event)
     onMiss(): void {
-      s.density = Math.min(100, s.density + 0.8);
-      if (Math.random() < 0.4) {
-        s.pendingSpawns += 2;
-        s.density = Math.min(100, s.density + 0.3);
+      s.density = Math.min(100, s.density + CASCADE.densityPerMiss);
+      if (Math.random() < CASCADE.missCascadeChance) {
+        s.pendingSpawns += CASCADE.missCascadeSpawns;
+        s.density = Math.min(100, s.density + CASCADE.densityPerMissCascade);
       }
     },
 
     // Called by engine when player slices an active satellite in L6
     onActiveDestroyed(): void {
-      s.density = Math.min(100, s.density + 3.5);
-      s.pendingSpawns += 3;
+      s.density = Math.min(100, s.density + CASCADE.densityPerActiveDestroyed);
+      s.pendingSpawns += CASCADE.activeDestroyedSpawns;
     },
 
     // Called by engine when player collects an active satellite in L6 (reduces density)
     onActiveCollected(): void {
-      s.density = Math.max(0, s.density - 2);
+      s.density = Math.max(0, s.density + CASCADE.densityPerActiveCollected);
     },
 
     isDead(): boolean { return s.density >= 100; },
@@ -83,7 +84,7 @@ export function createCascadeManager() {
 
       // Passive density creep from sheer volume
       if (s.frameCount % 180 === 0 && s.density < 100) {
-        s.density = Math.min(100, s.density + 0.3);
+        s.density = Math.min(100, s.density + CASCADE.densityCreep);
       }
 
       // Continuous "control is slipping" drone tracks the density meter.

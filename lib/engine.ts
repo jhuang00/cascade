@@ -1,5 +1,6 @@
 import type { EngineGameState, GameDisplayState, GameObject } from '@/lib/types';
 import { LEVELS } from '@/data/levels';
+import { SCORING } from '@/data/tuning';
 import { createStarLayers, createNebulae, createEarth, createOrbitArcs, drawBackground, flushBackgroundCaches } from '@/lib/background';
 import { spawnJunk, spawnActive, spawnActiveDense, spawnRare, spawnJunkSplit } from '@/lib/spawn';
 import { drawObj, drawCatalogLabel } from '@/lib/render';
@@ -234,12 +235,12 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
       gs.objs.splice(i, 1);
 
       if (o.type === 'junk') {
-        gs.score += 10;
+        gs.score += SCORING.sliceJunk;
         gs.cleared++;
         gs.labels.push({ x: o.x, y: o.y - 18, text: o.label, life: 50, maxLife: 50, color: '#9fd6f5' });
         Audio.playSlice({ pan: Audio.panFromX(o.x, W), velocity: sliceVel, flavor: o.fragmented ? 'fragment' : 'junk' });
       } else if (o.type === 'active') {
-        gs.score -= 25;
+        gs.score += SCORING.sliceActive;
         gs.destroyed++;
         gs.screenFlash = 20;
         gs.labels.push({ x: o.x, y: o.y - 18, text: o.label + ' DESTROYED', life: 60, maxLife: 60, color: '#ff7a7a' });
@@ -269,7 +270,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
           }
         }
       } else if (o.type === 'rare') {
-        gs.score += 5;
+        gs.score += SCORING.sliceRare;
         gs.labels.push({ x: o.x, y: o.y - 18, text: o.label + ' lost', life: 55, maxLife: 55, color: '#ffb070' });
         Audio.playSlice({ pan: Audio.panFromX(o.x, W), velocity: sliceVel, flavor: 'rare' });
       }
@@ -312,7 +313,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
       if (o.type === 'rare') {
         collectFx(gs, o);
         gs.objs.splice(i, 1);
-        gs.score += 100;
+        gs.score += SCORING.collectRare;
         gs.collected++;
         gs.labels.push({ x: o.x, y: o.y - 18, text: o.label, life: 65, maxLife: 65, color: '#ffe0a8' });
         gs.labels.push({ x: o.x, y: o.y + 2, text: '+100 preserved', life: 60, maxLife: 60, color: '#ffd080' });
@@ -324,7 +325,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
       if (lv?.isL6 && o.type === 'active') {
         collectFx(gs, o);
         gs.objs.splice(i, 1);
-        gs.score += 50;
+        gs.score += SCORING.collectActiveL6;
         gs.collected++;
         cascade.onActiveCollected();
         gs.densityMeter = cascade.getDensity();
@@ -407,7 +408,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
       if (o.type === 'junk' && o.y > H + 60) {
         gs.objs.splice(i, 1);
         gs.missed++;
-        gs.score -= 5;
+        gs.score += SCORING.missJunk;
         gs.totalReentries++;
         reentryBurnupFx(gs, o.x, H);
         // L6 cascade rule on miss
