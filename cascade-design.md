@@ -229,9 +229,11 @@ Future audio work (deferred):
 
 If we later decide we want richer / more produced audio, open-source options include freesound.org (Creative Commons licensed game sounds), OpenGameArt.org (game-focused, MIT/CC), and pixabay.com/sound-effects (royalty-free). For now, runtime synthesis is the right tool.
 
-### 5.5 Visual direction baseline (LOCKED — June 2026)
+### 5.5 Visual direction baseline (LOCKED — June 2026; chrome re-locked July 2026)
 
 Established by the visual prototype `cascade-visual-prototype.html`. All structural decisions below are committed. Specific values (colors, sizes, intensities) remain tunable in production.
+
+> **July 2026 update — chrome split out.** Everything *outside* the gameplay canvas (menu, intro/outro, HUD pills, tutorials, transitions) is now governed by `design-refs/cascade-visual.md` (reference mockup `design-refs/cascade-ui-mockup.html`): token palette (void→limb gradient, single amber accent, phosphor neutrals), Space Grotesk + IBM Plex Mono, corner-bracket reticles, orbital sigils. Implemented in `app/globals.css` (tokens), `components/Scene.tsx` (chrome backdrop), `components/Sigil.tsx`. This section continues to govern the gameplay canvas itself — its layers, gameplay signal colors (active blue, rare gold), and FX are unchanged.
 
 **Aesthetic identity.** Mission-control telemetry. The player is a ground controller looking through their station's display at a tracked area of low Earth orbit. Restrained, technical, atmospheric.
 

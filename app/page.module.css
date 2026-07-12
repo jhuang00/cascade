@@ -1,229 +1,153 @@
+/* Main menu — ceremonial register (design-refs/cascade-visual.md §9.1).
+   Anchored composition: wordmark upper-left, CTA lower-left, signature
+   lower-right. The Scene backdrop is the image; negative space is the layout. */
+
 .app {
+  position: relative;
   height: 100%;
   height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  gap: 12px;
-}
-
-@media (max-width: 480px) {
-  .app {
-    padding: 10px 12px;
-    gap: 8px;
-  }
-}
-
-.titleBar {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 11px;
-  color: #5a6470;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-}
-
-.titleLeft {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.dot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  background: #5fb3ff;
-  border-radius: 50%;
-  box-shadow: 0 0 6px #5fb3ff;
-  animation: blink 2s ease-in-out infinite;
-}
-
-.muteBtn {
-  background: transparent;
-  color: #6c6c7a;
-  border: 1px solid #2a2a32;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 11px;
-  cursor: pointer;
-  letter-spacing: 0.05em;
-}
-
-.muteBtn:hover {
-  background: #1a1a22;
-  color: #d4d4dc;
-}
-
-.canvasWrap {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-  width: 100%;
-  aspect-ratio: 680 / 460;
-  background: #02030a;
-  border-radius: 8px;
   overflow: hidden;
+  background: var(--void);
 }
 
-.bgCanvas {
+/* Utility control — top-right anchor */
+.soundToggle {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.menuScreen {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: clamp(16px, 5vw, 32px);
-  text-align: center;
-  overflow-y: auto;
-}
-
-.era {
-  font-family: var(--font-display);
-  font-weight: 300;
-  font-size: 11px;
-  color: #6c6c7a;
-  letter-spacing: 0.2em;
+  top: 18px;
+  right: 18px;
+  z-index: 20;
+  background: rgba(5, 7, 11, 0.55);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  color: var(--phosphor-dim);
+  font-family: var(--type-mono);
+  font-size: 10px;
+  letter-spacing: 0.3em;
   text-transform: uppercase;
-  margin-bottom: 6px;
-}
-
-.gameTitle {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(28px, 8vw, 48px);
-  letter-spacing: 0.02em;
-  margin-bottom: 8px;
-  color: #f0f0f5;
-}
-
-.tagline {
-  font-family: var(--font-display);
-  font-weight: 300;
-  font-size: 12px;
-  color: #8c8c95;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  margin-bottom: 24px;
-}
-
-.backstory {
-  font-family: var(--font-display);
-  font-weight: 400;
-  max-width: 460px;
-  font-size: 14px;
-  line-height: 1.7;
-  color: #b0b0b8;
-  margin: 0 0 24px;
-}
-
-.startBtn {
-  font-family: var(--font-display);
-  font-weight: 500;
-  background: #5fb3ff;
-  color: #08080c;
-  border: none;
-  padding: 11px 32px;
-  border-radius: 6px;
-  font-size: 13px;
+  padding: 8px 14px;
   cursor: pointer;
-  margin-top: 8px;
-  letter-spacing: 0.05em;
+  transition: color 180ms ease, border-color 180ms ease;
 }
 
-.startBtn:hover {
-  background: #7fc3ff;
+.soundToggle:hover {
+  color: var(--amber);
+  border-color: var(--amber-soft);
 }
 
-.levelSelect {
+/* Wordmark — 8vh from top, 6vw from left */
+.wordmarkWrap {
+  position: absolute;
+  top: 8vh;
+  left: 6vw;
+  z-index: 10;
+}
+
+.wordmark {
+  font-family: var(--type-display);
+  font-weight: 300;
+  font-size: clamp(40px, 6.5vw, 96px);
+  letter-spacing: 0.55em;   /* extreme tracking — the spacing IS the brand */
+  margin-right: -0.55em;
+  color: var(--phosphor);
+  line-height: 1;
+}
+
+.subtitle {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-bottom: 8px;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+  width: clamp(260px, 35vw, 480px);
 }
 
-.levelBtn {
+.subtitleRule {
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+
+.subtitleLabel {
+  font-family: var(--type-mono);
+  font-size: 10px;
+  letter-spacing: 0.35em;
+  color: var(--phosphor-dim);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Menu — 16vh from bottom, 6vw from left; ring-bullet items */
+.menuNav {
+  position: absolute;
+  bottom: 16vh;
+  left: 6vw;
+  z-index: 10;
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 2px;
-  background: rgba(30, 30, 38, 0.65);
-  border: 1px solid #2a2a32;
-  border-radius: 6px;
-  padding: 10px 14px;
+  min-width: 260px;
+}
+
+.menuItem {
+  background: none;
+  border: none;
+  color: var(--phosphor);
+  font-family: var(--type-display);
+  font-size: 18px;
+  font-weight: 300;
+  text-align: left;
+  padding: 10px 0 10px 28px;
   cursor: pointer;
-  color: #d4d4dc;
-  min-width: 80px;
-  transition: background 0.1s;
+  position: relative;
+  letter-spacing: 0.02em;
+  transition: color 180ms ease;
 }
 
-.levelBtn:hover:not(.locked) {
-  background: rgba(50, 50, 62, 0.85);
-  border-color: #5fb3ff;
+.menuItem::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--phosphor-dim);
+  border-radius: 50%;
+  transition: all 180ms ease;
 }
 
-.locked {
-  opacity: 0.4;
-  cursor: default;
+.menuItem:hover,
+.menuItem:focus-visible {
+  color: var(--amber);
+  outline: none;
 }
 
-.levelNum {
-  font-size: 11px;
-  color: #5fb3ff;
-  letter-spacing: 0.1em;
+.menuItem:hover::before,
+.menuItem:focus-visible::before {
+  border-color: var(--amber);
+  background: var(--amber);
+  box-shadow: 0 0 8px var(--amber-glow);
 }
 
-.levelName {
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 12px;
-  color: #f0f0f5;
+/* Footer signature — lower-right anchor */
+.signature {
+  position: absolute;
+  bottom: 5vh;
+  right: 4vw;
+  z-index: 10;
+  font-family: var(--type-mono);
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  color: var(--phosphor-muted);
+  text-transform: uppercase;
 }
 
-.levelBest {
-  font-size: 10px;
-  color: #8c8c95;
-}
-
-.levelLock {
-  font-size: 10px;
-  color: #6c6c7a;
-  letter-spacing: 0.05em;
-}
-
-.help {
-  width: 100%;
-  font-size: 11px;
-  color: #5a5a65;
-  line-height: 1.6;
-  text-align: center;
-}
-
-.help kbd {
-  background: #1a1a22;
-  border: 1px solid #3a3a45;
-  border-radius: 3px;
-  padding: 1px 5px;
-  font-family: inherit;
-  font-size: 10px;
-  color: #d4d4dc;
-}
-
-@media (max-width: 480px) {
-  .help {
-    display: none;
+@media (max-width: 600px) {
+  .wordmark {
+    letter-spacing: 0.35em;
+    margin-right: -0.35em;
+  }
+  .signature {
+    right: auto;
+    left: 6vw;
   }
 }

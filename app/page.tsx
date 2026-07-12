@@ -1,11 +1,10 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { loadProgress } from '@/lib/progress';
 import * as Audio from '@/lib/audio';
-import { LEVELS } from '@/data/levels';
 import { useGameStore } from '@/store/gameStore';
-import { createStarLayers, createNebulae, createEarth, createOrbitArcs, drawBackground } from '@/lib/background';
+import Scene from '@/components/Scene';
 import styles from './page.module.css';
 
 export default function MenuPage() {
@@ -14,75 +13,16 @@ export default function MenuPage() {
   const isMuted = useGameStore((s) => s.isMuted);
   const setMuted = useGameStore((s) => s.setMuted);
   const [unlockedLevel, setUnlockedLevel] = useState(1);
-  const [bestScores, setBestScores] = useState<Record<number, number>>({});
-  const bgCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const p = loadProgress();
-    setUnlockedLevel(p.unlockedLevel);
-    setBestScores(p.bestScores);
+    setUnlockedLevel(loadProgress().unlockedLevel);
   }, []);
 
-  // Animated background canvas
-  useEffect(() => {
-    const canvas = bgCanvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const W = 680, H = 460;
-    const stars = createStarLayers(W, H);
-    const nebulae = createNebulae(W, H);
-    const earth = createEarth(W, H);
-    const orbitArcs = createOrbitArcs(W, H);
-
-    const syncSize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-      canvas.width = Math.round(canvas.clientWidth * dpr);
-      canvas.height = Math.round(canvas.clientHeight * dpr);
-    };
-    const observer = new ResizeObserver(syncSize);
-    observer.observe(canvas);
-    syncSize();
-
-    let rafId: number;
-    let lastMs = 0;
-    function loop() {
-      // Ambient menu backdrop: 30fps is imperceptible for slow star drift
-      // and halves the idle energy cost (quarters it on 120Hz displays).
-      const now = performance.now();
-      if (now - lastMs < 32) {
-        rafId = requestAnimationFrame(loop);
-        return;
-      }
-      lastMs = now;
-      ctx!.save();
-      ctx!.scale(canvas!.width / W, canvas!.height / H);
-      drawBackground(ctx!, W, H, stars, nebulae, earth, orbitArcs);
-      ctx!.restore();
-      rafId = requestAnimationFrame(loop);
-    }
-    rafId = requestAnimationFrame(loop);
-
-    return () => {
-      cancelAnimationFrame(rafId);
-      observer.disconnect();
-    };
-  }, []);
-
-  function handleStart() {
+  function handleBegin() {
     Audio.initAudio();
     Audio.playClick();
     reset();
-    router.push('/play/1');
-  }
-
-  function handleLevel(levelId: number) {
-    if (levelId > unlockedLevel) return;
-    Audio.initAudio();
-    Audio.playClick();
-    reset();
-    router.push(`/play/${levelId}`);
+    router.push(`/play/${unlockedLevel}`);
   }
 
   function toggleMute() {
@@ -104,54 +44,29 @@ export default function MenuPage() {
 
   return (
     <div className={styles.app}>
-      <div className={styles.titleBar}>
-        <div className={styles.titleLeft}>
-          <span className={styles.dot} />
-          <span>Cascade · LEO debris tracking station</span>
+      <Scene />
+
+      <button className={styles.soundToggle} onClick={toggleMute}>
+        Sound [ {isMuted ? 'OFF' : 'ON'} ]
+      </button>
+
+      <div className={styles.wordmarkWrap}>
+        <h1 className={styles.wordmark}>CASCADE</h1>
+        <div className={styles.subtitle}>
+          <span className={styles.subtitleRule} />
+          <span className={styles.subtitleLabel}>Orbital debris / 1958 — present</span>
+          <span className={styles.subtitleRule} />
         </div>
-        <button className={styles.muteBtn} onClick={toggleMute}>
-          Sound: {isMuted ? 'off' : 'on'}
+      </div>
+
+      <nav className={styles.menuNav}>
+        <button className={styles.menuItem} onClick={handleBegin}>
+          Begin mission
         </button>
-      </div>
+      </nav>
 
-      <div className={styles.canvasWrap}>
-        <canvas ref={bgCanvasRef} className={styles.bgCanvas} />
-        <div className={styles.menuScreen}>
-          <div className={styles.era}>A web game by JH</div>
-          <h1 className={styles.gameTitle}>Cascade</h1>
-          <p className={styles.tagline}>slicing through the history of orbital debris</p>
-          <p className={styles.backstory}>
-            Six levels. The real history of low Earth orbit, played out as cuts and catches.
-            The labels are real. The numbers are real. The cascade is real.
-          </p>
-
-          {unlockedLevel > 1 && (
-            <div className={styles.levelSelect}>
-              {LEVELS.map((lv) => (
-                <button
-                  key={lv.id}
-                  className={`${styles.levelBtn} ${lv.id > unlockedLevel ? styles.locked : ''}`}
-                  onClick={() => handleLevel(lv.id)}
-                  disabled={lv.id > unlockedLevel}
-                  title={lv.id > unlockedLevel ? 'Locked' : `Best: ${bestScores[lv.id] ?? '—'}`}
-                >
-                  <span className={styles.levelNum}>L{lv.id}</span>
-                  <span className={styles.levelName}>{lv.title}</span>
-                  {bestScores[lv.id] && <span className={styles.levelBest}>{bestScores[lv.id]} pts</span>}
-                  {lv.id > unlockedLevel && <span className={styles.levelLock}>locked</span>}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <button className={styles.startBtn} onClick={handleStart}>
-            {unlockedLevel > 1 ? 'Restart from L1' : 'Start'}
-          </button>
-        </div>
-      </div>
-
-      <div className={styles.help}>
-        move to slice gray junk &nbsp;·&nbsp; hold <kbd>SPACE</kbd> + click (or tap on mobile) gold pulses to collect &nbsp;·&nbsp; avoid blue satellites
+      <div className={styles.signature}>
+        CASCADE.MCC · CATALOG NORAD / NASA-ODPO
       </div>
     </div>
   );

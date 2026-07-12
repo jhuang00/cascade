@@ -4,6 +4,7 @@ import { useGameStore } from '@/store/gameStore';
 import { LEVELS } from '@/data/levels';
 import TutorialCard from '@/components/TutorialCard';
 import Illustration from '@/components/Illustration';
+import Sigil from '@/components/Sigil';
 import * as Audio from '@/lib/audio';
 import styles from './Screen.module.css';
 
@@ -92,6 +93,9 @@ export default function LevelIntro({ onBegin }: Props) {
   if (frame === 0) {
     return (
       <div className={styles.screen}>
+        <div className={styles.sigilSlot}>
+          <Sigil level={lv.id} width={84} />
+        </div>
         <div className={styles.era}>{lv.era}</div>
         <h1 className={styles.title}>{lv.title}</h1>
         <p

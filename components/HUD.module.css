@@ -6,6 +6,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-family: var(--type-mono);
   font-size: 11px;
   pointer-events: none;
   z-index: 5;
@@ -14,26 +15,26 @@
 }
 
 .block {
-  background: rgba(6, 6, 10, 0.55);
+  background: rgba(5, 7, 11, 0.55);
   padding: 4px 10px;
-  border-radius: 4px;
-  border: 1px solid rgba(60, 60, 68, 0.4);
-  color: #8c8c95;
+  border-radius: 2px;
+  border: 1px solid var(--rule);
+  color: var(--phosphor-dim);
 }
 
 .bright {
-  color: #f0f0f5;
-  font-weight: 500;
+  color: var(--phosphor);
+  font-weight: 400;
 }
 
 .dim {
-  color: #8c8c95;
+  color: var(--phosphor-dim);
 }
 
 .warn {
-  color: #ff7a7a;
+  color: var(--cascade);
 }
 
 .caution {
-  color: #ffb060;
+  color: var(--amber);
 }

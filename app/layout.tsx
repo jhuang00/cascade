@@ -1,5 +1,22 @@
 import type { Metadata, Viewport } from 'next';
+import { Space_Grotesk, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
+
+// Two faces, two jobs (design-refs/cascade-visual.md §3):
+// Space Grotesk = display + body, IBM Plex Mono = catalog/data voice.
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  weight: ['300', '400', '500'],
+  variable: '--font-space-grotesk',
+  display: 'swap',
+});
+
+const plexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['300', '400', '500'],
+  variable: '--font-plex-mono',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Cascade',
@@ -15,14 +32,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://api.fontshare.com" />
-        <link
-          rel="stylesheet"
-          href="https://api.fontshare.com/v2/css?f[]=clash-grotesk@200,300,400,500,600,700&display=swap"
-        />
-      </head>
+    <html lang="en" className={`${spaceGrotesk.variable} ${plexMono.variable}`}>
       <body>{children}</body>
     </html>
   );

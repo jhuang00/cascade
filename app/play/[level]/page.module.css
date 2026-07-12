@@ -1,3 +1,8 @@
+/* Play screen chrome — telemetric register. Layout unchanged from the
+   pre-redesign version; colors/typography follow the token system
+   (design-refs/cascade-visual.md). Gameplay canvas colors are governed by
+   cascade-design.md §5.5 and are untouched. */
+
 .app {
   height: 100%;
   height: 100dvh;
@@ -7,6 +12,7 @@
   justify-content: center;
   padding: 16px;
   gap: 12px;
+  background: var(--void);
 }
 
 @media (max-width: 480px) {
@@ -21,8 +27,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-family: var(--type-mono);
   font-size: 11px;
-  color: #5a6470;
+  color: var(--phosphor-muted);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   gap: 8px;
@@ -45,30 +52,31 @@
   display: inline-block;
   width: 6px;
   height: 6px;
-  background: #5fb3ff;
+  background: var(--amber);
   border-radius: 50%;
-  box-shadow: 0 0 6px #5fb3ff;
+  box-shadow: 0 0 6px var(--amber-glow);
   flex-shrink: 0;
   animation: blink 2s ease-in-out infinite;
 }
 
-.metLabel { color: #5a6470; }
-.metValue { color: #cde0f5; }
+.metLabel { color: var(--phosphor-muted); }
+.metValue { color: var(--phosphor); }
 
 .muteBtn {
   background: transparent;
-  color: #6c6c7a;
-  border: 1px solid #2a2a32;
+  color: var(--phosphor-dim);
+  border: 1px solid var(--rule);
   padding: 4px 10px;
-  border-radius: 4px;
+  border-radius: 2px;
   font-size: 11px;
   cursor: pointer;
   letter-spacing: 0.05em;
+  transition: color 180ms ease, border-color 180ms ease;
 }
 
 .muteBtn:hover {
-  background: #1a1a22;
-  color: #d4d4dc;
+  color: var(--amber);
+  border-color: var(--amber-soft);
 }
 
 /* Fills the leftover column space; centers the letterboxed game box. */
@@ -89,19 +97,19 @@
   height: 100%;
 }
 
-/* Corner brackets */
+/* Corner brackets — the signature reticle */
 .brackets {
   position: absolute;
   inset: 6px;
   pointer-events: none;
-  border-radius: 4px;
 }
 
 .bracket {
   position: absolute;
-  width: 18px;
-  height: 18px;
-  border-color: rgba(95, 179, 255, 0.4);
+  width: 14px;
+  height: 14px;
+  border-color: var(--amber-soft);
+  opacity: 0.7;
 }
 
 .tl { top: 0; left: 0; border-top: 1px solid; border-left: 1px solid; }
@@ -120,6 +128,7 @@
   align-items: center;
   pointer-events: none;
   z-index: 4;
+  font-family: var(--type-mono);
   font-size: 10px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -131,11 +140,11 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(8, 10, 16, 0.55);
-  border: 1px solid rgba(95, 179, 255, 0.18);
+  background: rgba(5, 7, 11, 0.55);
+  border: 1px solid var(--rule);
   padding: 5px 11px;
-  border-radius: 3px;
-  color: #8a9ab0;
+  border-radius: 2px;
+  color: var(--phosphor-dim);
 }
 
 @media (max-width: 480px) {
@@ -155,8 +164,8 @@
   }
 }
 
-.pillLabel { color: #5a6470; }
-.pillValue { color: #cde0f5; font-weight: 500; }
+.pillLabel { color: var(--phosphor-muted); }
+.pillValue { color: var(--phosphor); font-weight: 400; }
 
 .statusDot {
   display: inline-block;
@@ -166,16 +175,16 @@
 }
 
 .nominal {
-  background: #5fb3ff;
-  box-shadow: 0 0 5px #5fb3ff;
+  background: var(--cleared);
+  box-shadow: 0 0 5px rgba(111, 163, 137, 0.5);
 }
 .elevated {
-  background: #ffc874;
-  box-shadow: 0 0 5px #ffc874;
+  background: var(--amber);
+  box-shadow: 0 0 5px var(--amber-glow);
 }
 .critical {
-  background: #ff7a7a;
-  box-shadow: 0 0 5px #ff7a7a;
+  background: var(--cascade);
+  box-shadow: 0 0 5px rgba(194, 86, 86, 0.5);
 }
 
 /* Bottom telemetry */
@@ -189,15 +198,16 @@
   align-items: center;
   pointer-events: none;
   z-index: 4;
+  font-family: var(--type-mono);
   font-size: 10px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #5a6470;
+  color: var(--phosphor-muted);
 }
 
-.tracking { color: #8a9ab0; }
-.trackValue { color: #cde0f5; }
-.signature { color: #5a6470; }
+.tracking { color: var(--phosphor-dim); }
+.trackValue { color: var(--phosphor); }
+.signature { color: var(--phosphor-muted); }
 
 @media (max-width: 480px) {
   .hudBottom {
@@ -213,72 +223,75 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(6, 6, 10, 0.92);
+  background: rgba(5, 7, 11, 0.94);
   padding: 32px;
   text-align: center;
-  border-radius: 8px;
+  border-radius: 2px;
   z-index: 20;
 }
 
 .completeEra {
-  font-family: var(--font-display);
+  font-family: var(--type-mono);
   font-weight: 300;
-  font-size: 11px;
-  color: #6c6c7a;
-  letter-spacing: 0.2em;
+  font-size: 10px;
+  color: var(--phosphor-muted);
+  letter-spacing: 0.3em;
   text-transform: uppercase;
-  margin-bottom: 6px;
+  margin-bottom: 10px;
 }
 
 .completeTitle {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: clamp(20px, 5vw, 30px);
-  color: #f0f0f5;
+  font-family: var(--type-display);
+  font-weight: 300;
+  font-size: clamp(22px, 5vw, 32px);
+  color: var(--phosphor);
   margin-bottom: 16px;
 }
 
 .completeBody {
-  font-family: var(--font-display);
+  font-family: var(--type-display);
   font-weight: 400;
   max-width: 460px;
   font-size: 14px;
   line-height: 1.7;
-  color: #b0b0b8;
+  color: var(--phosphor-dim);
   margin-bottom: 24px;
 }
 
 .completeBtn {
-  font-family: var(--font-display);
+  font-family: var(--type-display);
   font-weight: 500;
-  background: #5fb3ff;
-  color: #08080c;
+  background: var(--amber);
+  color: var(--void);
   border: none;
-  padding: 11px 32px;
-  border-radius: 6px;
-  font-size: 13px;
+  padding: 12px 32px;
+  border-radius: 2px;
+  font-size: 11px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
   cursor: pointer;
-  letter-spacing: 0.05em;
+  transition: background 180ms ease;
 }
 
-.completeBtn:hover { background: #7fc3ff; }
+.completeBtn:hover { background: var(--amber-soft); }
 
 .help {
   width: 100%;
+  font-family: var(--type-mono);
   font-size: 11px;
-  color: #5a5a65;
+  color: var(--phosphor-muted);
   line-height: 1.6;
   text-align: center;
 }
 
 .help kbd {
-  background: #1a1a22;
-  border: 1px solid #3a3a45;
-  border-radius: 3px;
+  background: rgba(5, 7, 11, 0.7);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
   padding: 1px 5px;
   font-family: inherit;
   font-size: 10px;
-  color: #d4d4dc;
+  color: var(--phosphor);
 }
 
 .helpDesktop {
@@ -310,12 +323,12 @@
   gap: 12px;
   padding: 24px;
   text-align: center;
-  background: rgba(4, 5, 10, 0.96);
-  border-radius: 8px;
+  background: rgba(5, 7, 11, 0.96);
+  border-radius: 2px;
 }
 
 .rotateIcon {
-  color: #5fb3ff;
+  color: var(--amber);
   animation: rotateHint 2.4s ease-in-out infinite;
 }
 
@@ -325,18 +338,18 @@
 }
 
 .rotateTitle {
-  font-family: var(--font-display);
-  font-weight: 600;
+  font-family: var(--type-display);
+  font-weight: 400;
   font-size: 18px;
-  color: #f0f0f5;
+  color: var(--phosphor);
   letter-spacing: 0.02em;
 }
 
 .rotateBody {
-  font-family: var(--font-display);
+  font-family: var(--type-display);
   font-weight: 400;
   font-size: 13px;
-  color: #9aa3b0;
+  color: var(--phosphor-dim);
   max-width: 280px;
   line-height: 1.5;
   margin: 0;

@@ -5,6 +5,7 @@ import { useGameStore } from '@/store/gameStore';
 import { LEVELS } from '@/data/levels';
 import { recordLevelPass } from '@/lib/progress';
 import * as Audio from '@/lib/audio';
+import Sigil from '@/components/Sigil';
 import styles from './Screen.module.css';
 
 interface Props {
@@ -45,7 +46,7 @@ export default function LevelOutro({ onRetry }: Props) {
 
   const isLast = currentLevelIdx >= LEVELS.length - 1;
 
-  let resultLabel = resultSuccess ? 'Level passed' : 'Level failed';
+  let resultLabel = resultSuccess ? 'Mission cleared' : 'Mission failed';
   let resultClass = resultSuccess ? styles.success : styles.failure;
   let scoreClass = resultSuccess ? styles.scorePass : styles.scoreFail;
   let outroFact = lv.outroFact;
@@ -59,6 +60,9 @@ export default function LevelOutro({ onRetry }: Props) {
       <div className={styles.screen}>
         <div className={styles.cols}>
           <div className={styles.colA}>
+            <div className={styles.sigilSlot}>
+              <Sigil level={6} state="cascade" width={72} />
+            </div>
             <div className={`${styles.resultLabel} ${styles.cascade}`}>Cascade reached</div>
             <h1 className={styles.title}>The math has already decided.</h1>
 
@@ -88,14 +92,14 @@ export default function LevelOutro({ onRetry }: Props) {
               <p className={styles.factBody}>{outroFact}</p>
             </div>
 
-            <p className={styles.epilogue}>There is no level 7.</p>
+            <p className={styles.epilogue}>There is no mission 07</p>
 
             <div className={styles.actions}>
               <button className={styles.primary} onClick={() => { Audio.playClick(); setScreen('complete'); }}>
                 Continue
               </button>
               <button className={styles.secondary} onClick={() => { Audio.playClick(); router.push('/'); }}>
-                Back to menu
+                ‹ Menu
               </button>
             </div>
           </div>
@@ -167,6 +171,9 @@ export default function LevelOutro({ onRetry }: Props) {
     <div className={styles.screen}>
       <div className={styles.cols}>
         <div className={styles.colA}>
+          <div className={styles.sigilSlot}>
+            <Sigil level={lv.id} state={resultSuccess ? 'cleared' : 'default'} width={72} />
+          </div>
           <div className={`${styles.resultLabel} ${resultClass}`}>{resultLabel}</div>
           <h1 className={styles.title}>{headline || lv.title}</h1>
 
@@ -231,12 +238,12 @@ export default function LevelOutro({ onRetry }: Props) {
           <div className={styles.actions}>
             {resultSuccess ? (
               <button className={styles.primary} onClick={handleNext}>
-                {isLast ? 'Continue' : 'Next level'}
+                {isLast ? 'Continue' : 'Next mission ›'}
               </button>
             ) : (
               <button className={styles.primary} onClick={handleRetry}>Retry</button>
             )}
-            <button className={styles.secondary} onClick={handleMenu}>Back to menu</button>
+            <button className={styles.secondary} onClick={handleMenu}>‹ Menu</button>
           </div>
         </div>
       </div>

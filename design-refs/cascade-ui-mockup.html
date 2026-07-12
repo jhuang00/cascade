@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cascade — UI Visual Direction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     CASCADE — UI direction mockup
+     Two screens (main menu, level select) toggled by pill in corner.
+     ============================================================ */
+
+  :root {
+    /* Palette — two-axis: cold void → warm airglow */
+    --void:           #05070b;
+    --space:          #0a0f17;
+    --night:          #121a26;
+    --horizon-cold:   #1f2c3d;
+    --horizon-warm:   #6b3a22;
+    --limb:           #c4663a;
+    --airglow:        #e89968;
+
+    /* Single accent */
+    --amber:          #ffb547;
+    --amber-soft:     #d99a3c;
+    --amber-glow:     rgba(255, 181, 71, 0.18);
+
+    /* Mono / phosphor */
+    --phosphor:       #e8e4d4;
+    --phosphor-dim:   #a09a86;
+    --phosphor-muted: #5a5448;
+
+    /* State */
+    --cleared:        #6fa389;   /* cool sage, never amber — never compete */
+    --locked:         rgba(232, 228, 212, 0.20);
+    --cascade:        #b04848;   /* L6 only, used once */
+
+    /* Hairline */
+    --rule:           rgba(232, 228, 212, 0.22);
+    --rule-strong:    rgba(255, 181, 71, 0.55);
+
+    --type-display: 'Space Grotesk', system-ui, sans-serif;
+    --type-mono:    'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--void);
+    color: var(--phosphor);
+    font-family: var(--type-display);
+    font-weight: 300;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* ============================================================
+     BACKGROUND — shared across both screens
+     ============================================================ */
+
+  .stage {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  /* Vertical gradient: deep void at top → warm airglow band at horizon */
+  .gradient {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(
+        to bottom,
+        var(--void) 0%,
+        var(--space) 30%,
+        var(--night) 55%,
+        var(--horizon-cold) 72%,
+        var(--horizon-warm) 90%,
+        var(--limb) 100%
+      );
+  }
+
+  /* Earth limb — curved arc bottom right, like Dune's planet but cooler */
+  .earth-limb {
+    position: absolute;
+    bottom: -55vh;
+    right: -25vw;
+    width: 130vh;
+    height: 130vh;
+    border-radius: 50%;
+    background:
+      radial-gradient(
+        circle at 35% 35%,
+        #d97045 0%,
+        #8c3a1f 35%,
+        #2d1208 65%,
+        #0a0509 90%
+      );
+    box-shadow:
+      inset 0 0 200px rgba(255, 140, 80, 0.25),
+      0 0 180px rgba(255, 120, 60, 0.18);
+    opacity: 0.78;
+  }
+
+  /* Atmospheric glow at the limb edge — thin warm band */
+  .airglow-band {
+    position: absolute;
+    bottom: -55vh;
+    right: -25vw;
+    width: 130vh;
+    height: 130vh;
+    border-radius: 50%;
+    box-shadow:
+      0 0 0 2px rgba(255, 180, 100, 0.35),
+      0 0 40px 8px rgba(255, 140, 70, 0.20),
+      0 0 120px 20px rgba(255, 100, 50, 0.10);
+  }
+
+  /* Star field — three layers via CSS shadows */
+  .stars {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .stars::before, .stars::after {
+    content: "";
+    position: absolute;
+    width: 2px; height: 2px;
+    border-radius: 50%;
+    background: white;
+  }
+  .stars::before {
+    /* dim background layer */
+    opacity: 0.35;
+    box-shadow:
+      4vw 8vh 0 0.5px #aab,
+      11vw 22vh 0 0.5px #ccd,
+      17vw 5vh 0 0.5px #abc,
+      23vw 17vh 0 0.5px #aab,
+      31vw 31vh 0 0.5px #ccd,
+      38vw 7vh 0 0.5px #aab,
+      44vw 19vh 0 0.5px #bbc,
+      51vw 38vh 0 0.5px #aab,
+      57vw 11vh 0 0.5px #ccd,
+      63vw 26vh 0 0.5px #aab,
+      71vw 43vh 0 0.5px #ccd,
+      78vw 15vh 0 0.5px #bbc,
+      85vw 28vh 0 0.5px #aab,
+      92vw 9vh 0 0.5px #ccd,
+      6vw 48vh 0 0.5px #aab,
+      14vw 55vh 0 0.5px #ccd,
+      27vw 49vh 0 0.5px #aab,
+      42vw 60vh 0 0.5px #ccd,
+      67vw 53vh 0 0.5px #aab,
+      8vw 36vh 0 0.5px #ccd,
+      35vw 42vh 0 0.5px #aab,
+      48vw 14vh 0 0.5px #bbc,
+      74vw 22vh 0 0.5px #ccd,
+      88vw 38vh 0 0.5px #aab;
+  }
+  .stars::after {
+    /* brighter foreground layer */
+    opacity: 0.85;
+    box-shadow:
+      9vw 13vh 0 0.5px #fff,
+      19vw 27vh 0 0.5px #fff,
+      33vw 9vh 0 0.5px #fff,
+      46vw 32vh 0 0.5px #fff,
+      59vw 17vh 0 0.5px #fff,
+      72vw 5vh 0 0.5px #fff,
+      83vw 24vh 0 0.5px #fff,
+      12vw 42vh 0 0.5px #fff,
+      27vw 38vh 0 0.5px #fff,
+      55vw 47vh 0 0.5px #fff,
+      69vw 35vh 0 0.5px #fff,
+      3vw 19vh 0 0.5px #fff,
+      89vw 14vh 0 0.5px #fff,
+      40vw 49vh 0 0.5px #fff;
+  }
+
+  /* Orbital traces — Cascade's ornament. Hairline elliptical paths
+     drifting across the background, replacing Dune's deco beats. */
+  .traces {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.55;
+  }
+  .traces svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .traces path, .traces ellipse {
+    fill: none;
+    stroke: var(--amber-soft);
+    stroke-width: 0.5;
+    opacity: 0.35;
+  }
+
+  /* ============================================================
+     SCREENS
+     ============================================================ */
+
+  .screen {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    height: 100vh;
+    display: none;
+  }
+  .screen.active { display: block; }
+
+  /* ============================================================
+     SCREEN 1 — MAIN MENU
+     Cinematic register. Background dominates. UI tucked to lower-left.
+     ============================================================ */
+
+  .menu-screen .wordmark-wrap {
+    position: absolute;
+    top: 8vh;
+    left: 6vw;
+  }
+
+  .wordmark {
+    font-family: var(--type-display);
+    font-weight: 300;
+    font-size: clamp(48px, 6.5vw, 96px);
+    letter-spacing: 0.55em;        /* extreme tracking — the signature */
+    color: var(--phosphor);
+    line-height: 1;
+    margin-right: -0.55em;          /* compensate trailing letter-space */
+  }
+
+  .wordmark-rules {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 18px;
+    width: clamp(280px, 35vw, 480px);
+  }
+  .wordmark-rules .rule {
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+  .wordmark-rules .label {
+    font-family: var(--type-mono);
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    color: var(--phosphor-dim);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .menu-nav {
+    position: absolute;
+    bottom: 16vh;
+    left: 6vw;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 260px;
+  }
+
+  .menu-item {
+    background: none;
+    border: none;
+    color: var(--phosphor);
+    font-family: var(--type-display);
+    font-size: 18px;
+    font-weight: 300;
+    text-align: left;
+    padding: 10px 0 10px 28px;
+    cursor: pointer;
+    position: relative;
+    letter-spacing: 0.02em;
+    transition: color 180ms ease;
+  }
+  .menu-item::before {
+    /* ring bullet — borrowed from Dune deliberately, fits mission control */
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    border: 1px solid var(--phosphor-dim);
+    border-radius: 50%;
+    transition: all 180ms ease;
+  }
+  .menu-item:hover { color: var(--amber); }
+  .menu-item:hover::before {
+    border-color: var(--amber);
+    background: var(--amber);
+    box-shadow: 0 0 8px var(--amber-glow);
+  }
+  .menu-item.disabled {
+    color: var(--phosphor-muted);
+    pointer-events: none;
+  }
+  .menu-item.disabled::before {
+    border-color: var(--phosphor-muted);
+  }
+
+  /* Mission control telemetry pill — Cascade's voice, lower-right.
+     Replaces Dune's "GAME PREVIEW" notice, but in our register. */
+  .telemetry-card {
+    position: absolute;
+    bottom: 5vh;
+    right: 4vw;
+    width: 280px;
+    padding: 18px 20px;
+    background: rgba(5, 7, 11, 0.55);
+    backdrop-filter: blur(6px);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    font-family: var(--type-mono);
+  }
+  .telemetry-card .corners::before,
+  .telemetry-card .corners::after,
+  .telemetry-card::before,
+  .telemetry-card::after {
+    content: "";
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border: 1px solid var(--amber-soft);
+  }
+  .telemetry-card::before    { top: -1px; left: -1px;    border-right: none; border-bottom: none; }
+  .telemetry-card::after     { top: -1px; right: -1px;   border-left: none;  border-bottom: none; }
+  .telemetry-card .corners::before { bottom: -1px; left: -1px;  border-right: none; border-top: none; }
+  .telemetry-card .corners::after  { bottom: -1px; right: -1px; border-left: none;  border-top: none; }
+
+  .telemetry-card .head {
+    font-size: 9px;
+    letter-spacing: 0.4em;
+    color: var(--amber);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+  .telemetry-card .body {
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--phosphor-dim);
+  }
+  .telemetry-card .body .k { color: var(--phosphor-muted); }
+  .telemetry-card .body .v { color: var(--phosphor); }
+
+  /* ============================================================
+     SCREEN 2 — LEVEL SELECT
+     Ceremonial register. UI in foreground, cards composed center.
+     ============================================================ */
+
+  .select-screen .topbar {
+    position: absolute;
+    top: 6vh;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+  }
+  .topbar .back {
+    position: absolute;
+    left: 5vw;
+    background: none;
+    border: none;
+    color: var(--phosphor-dim);
+    font-family: var(--type-mono);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    cursor: pointer;
+    text-transform: uppercase;
+    padding: 8px 0;
+  }
+  .topbar .back:hover { color: var(--amber); }
+
+  .topbar .title-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .topbar .title {
+    font-family: var(--type-display);
+    font-size: 14px;
+    letter-spacing: 0.5em;
+    color: var(--phosphor);
+    text-transform: uppercase;
+  }
+  .topbar .meta {
+    font-family: var(--type-mono);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--phosphor-muted);
+    text-transform: uppercase;
+  }
+
+  /* Card row — three visible (cleared / active / locked).
+     For real implementation: 6 cards in a horizontal scroller. */
+  .cards {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    gap: 32px;
+    align-items: stretch;
+  }
+
+  .card {
+    width: 280px;
+    height: 480px;
+    background: rgba(5, 7, 11, 0.55);
+    backdrop-filter: blur(4px);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform 280ms ease, border-color 280ms ease;
+  }
+
+  /* Corner brackets — Cascade's existing language, kept */
+  .card::before,
+  .card::after,
+  .card .br::before,
+  .card .br::after {
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    pointer-events: none;
+  }
+  .card::before { top: 8px;    left: 8px;    border-top: 1px solid var(--amber-soft); border-left: 1px solid var(--amber-soft); }
+  .card::after  { top: 8px;    right: 8px;   border-top: 1px solid var(--amber-soft); border-right: 1px solid var(--amber-soft); }
+  .card .br::before { bottom: 8px; left: 8px;  border-bottom: 1px solid var(--amber-soft); border-left: 1px solid var(--amber-soft); }
+  .card .br::after  { bottom: 8px; right: 8px; border-bottom: 1px solid var(--amber-soft); border-right: 1px solid var(--amber-soft); }
+
+  /* SIGIL — the heraldic device. A tilted orbital ellipse,
+     unique to each level. Encodes inclination = event = difficulty. */
+  .card .sigil {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 22px;
+  }
+  .card .sigil svg {
+    width: 52px;
+    height: 36px;
+  }
+  .card .sigil ellipse,
+  .card .sigil line,
+  .card .sigil circle,
+  .card .sigil path {
+    fill: none;
+    stroke: var(--amber-soft);
+    stroke-width: 1;
+  }
+  .card .sigil circle.node {
+    fill: var(--amber);
+    stroke: none;
+  }
+
+  .card .title-block {
+    text-align: center;
+    padding: 18px 24px 16px;
+  }
+  .card .level-num {
+    font-family: var(--type-mono);
+    font-size: 10px;
+    letter-spacing: 0.4em;
+    color: var(--amber-soft);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .card .level-name {
+    font-family: var(--type-display);
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: 0.35em;
+    color: var(--phosphor);
+    text-transform: uppercase;
+    line-height: 1.3;
+  }
+  .card .epoch {
+    font-family: var(--type-mono);
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--phosphor-muted);
+    margin-top: 10px;
+    text-transform: uppercase;
+  }
+
+  .card .divider {
+    height: 1px;
+    background: var(--rule);
+    margin: 0 24px;
+    position: relative;
+  }
+  .card .divider::before {
+    /* small chevron interruption — hairline ornament */
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: -3px;
+    transform: translateX(-50%) rotate(45deg);
+    width: 6px; height: 6px;
+    border-top: 1px solid var(--amber-soft);
+    border-right: 1px solid var(--amber-soft);
+    background: var(--space);
+  }
+
+  /* The hero region — painted when active, ghosted when locked,
+     monochrome-aged when cleared. Selection through illumination. */
+  .card .hero {
+    flex: 1;
+    margin: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .card .hero canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* Status band at bottom — Dune's "INFORMATION" equivalent.
+     ACTIVE = amber band. CLEARED = cool sage. LOCKED = none. */
+  .card .band {
+    padding: 14px 20px 12px;
+    background: var(--amber);
+    color: var(--void);
+    font-family: var(--type-display);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    text-align: center;
+  }
+  .card .band-body {
+    padding: 10px 20px 20px;
+    font-family: var(--type-mono);
+    font-size: 10px;
+    line-height: 1.6;
+    color: var(--phosphor);
+  }
+
+  /* States */
+  .card.active {
+    border-color: var(--amber-soft);
+    box-shadow: 0 0 60px rgba(255, 181, 71, 0.08);
+  }
+  .card.active::before, .card.active::after,
+  .card.active .br::before, .card.active .br::after {
+    border-color: var(--amber);
+  }
+
+  .card.cleared {
+    opacity: 0.65;
+  }
+  .card.cleared .band {
+    background: transparent;
+    color: var(--cleared);
+    border-top: 1px solid var(--cleared);
+    border-bottom: 1px solid var(--cleared);
+  }
+  .card.cleared .band-body { color: var(--phosphor-dim); }
+  .card.cleared::before, .card.cleared::after,
+  .card.cleared .br::before, .card.cleared .br::after {
+    border-color: var(--cleared);
+    opacity: 0.6;
+  }
+  .card.cleared .sigil ellipse,
+  .card.cleared .sigil line,
+  .card.cleared .sigil path { stroke: var(--cleared); }
+  .card.cleared .sigil circle.node { fill: var(--cleared); }
+  .card.cleared .level-num { color: var(--cleared); }
+
+  .card.locked {
+    opacity: 0.35;
+  }
+  .card.locked .hero {
+    background: repeating-linear-gradient(
+      45deg,
+      transparent, transparent 8px,
+      rgba(232, 228, 212, 0.04) 8px, rgba(232, 228, 212, 0.04) 9px
+    );
+  }
+  .card.locked .band-body {
+    color: var(--phosphor-muted);
+    text-align: center;
+  }
+
+  /* ============================================================
+     VIEW TOGGLE
+     ============================================================ */
+  .view-toggle {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 100;
+    background: rgba(5, 7, 11, 0.7);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 4px;
+    display: flex;
+    gap: 0;
+    font-family: var(--type-mono);
+  }
+  .view-toggle button {
+    background: none;
+    border: none;
+    color: var(--phosphor-dim);
+    padding: 8px 18px;
+    font-family: var(--type-mono);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    cursor: pointer;
+    border-radius: 999px;
+    text-transform: uppercase;
+    transition: all 180ms ease;
+  }
+  .view-toggle button.active {
+    background: var(--amber);
+    color: var(--void);
+  }
+
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     SHARED BACKGROUND
+     ============================================================ -->
+<div class="stage">
+  <div class="gradient"></div>
+  <div class="airglow-band"></div>
+  <div class="earth-limb"></div>
+  <div class="stars"></div>
+  <div class="traces">
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+      <!-- thin orbital arcs drifting across the field -->
+      <ellipse cx="50" cy="50" rx="60" ry="14" transform="rotate(-12 50 50)" />
+      <ellipse cx="50" cy="50" rx="48" ry="9" transform="rotate(8 50 50)" />
+      <ellipse cx="50" cy="50" rx="72" ry="20" transform="rotate(-25 50 50)" opacity="0.5" />
+      <ellipse cx="50" cy="50" rx="38" ry="6" transform="rotate(18 50 50)" opacity="0.4" />
+    </svg>
+  </div>
+</div>
+
+<!-- ============================================================
+     VIEW TOGGLE
+     ============================================================ -->
+<div class="view-toggle">
+  <button class="active" data-view="menu">Main menu</button>
+  <button data-view="select">Mission select</button>
+</div>
+
+<!-- ============================================================
+     SCREEN 1 — MAIN MENU
+     ============================================================ -->
+<div class="screen menu-screen active" id="screen-menu">
+
+  <div class="wordmark-wrap">
+    <div class="wordmark">CASCADE</div>
+    <div class="wordmark-rules">
+      <span class="rule"></span>
+      <span class="label">Orbital debris / 1958–present</span>
+      <span class="rule"></span>
+    </div>
+  </div>
+
+  <nav class="menu-nav">
+    <button class="menu-item">○ Begin mission</button>
+    <button class="menu-item">○ Continue</button>
+    <button class="menu-item">○ Catalog</button>
+    <button class="menu-item">○ Options</button>
+    <button class="menu-item">○ Credits</button>
+    <button class="menu-item">○ Exit</button>
+  </nav>
+
+  <div class="telemetry-card">
+    <div class="corners"></div>
+    <div class="head">Build status</div>
+    <div class="body">
+      <div><span class="k">VER</span> &nbsp;&nbsp;<span class="v">0.5.2 / prototype</span></div>
+      <div><span class="k">CAT</span> &nbsp;&nbsp;<span class="v">NORAD / NASA-ODPO</span></div>
+      <div><span class="k">EPOCH</span>&nbsp;<span class="v">2026.176</span></div>
+      <div style="margin-top:10px; color: var(--phosphor-muted); font-size: 10px;">
+        Six missions. Real debris. Sourced from the public<br>
+        NORAD/NASA orbital catalog. No fiction added.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============================================================
+     SCREEN 2 — MISSION SELECT
+     ============================================================ -->
+<div class="screen select-screen" id="screen-select">
+
+  <div class="topbar">
+    <button class="back">‹ Back</button>
+    <div class="title-block">
+      <div class="title">Mission select</div>
+      <div class="meta">6 missions · 1958 → present</div>
+    </div>
+  </div>
+
+  <div class="cards">
+
+    <!-- ===== CARD 1 — CLEARED ===== -->
+    <article class="card cleared">
+      <span class="br"></span>
+      <div class="sigil" title="Level 1 — nearly equatorial, the calm era">
+        <svg viewBox="0 0 60 40">
+          <!-- nearly equatorial — a calm flat ellipse -->
+          <ellipse cx="30" cy="20" rx="26" ry="4" />
+          <circle class="node" cx="48" cy="20" r="2" />
+        </svg>
+      </div>
+      <div class="title-block">
+        <div class="level-num">Mission · 01</div>
+        <div class="level-name">The Quiet</div>
+        <div class="epoch">1958 — 1990</div>
+      </div>
+      <div class="divider"></div>
+      <div class="hero">
+        <canvas id="hero1" width="280" height="200"></canvas>
+      </div>
+      <div class="band">Cleared</div>
+      <div class="band-body" style="text-align:center;">
+        Best · <span style="color:var(--phosphor)">14,820</span>
+        &nbsp;·&nbsp; Rares · <span style="color:var(--phosphor)">2/2</span>
+      </div>
+    </article>
+
+    <!-- ===== CARD 2 — ACTIVE / SELECTED ===== -->
+    <article class="card active">
+      <span class="br"></span>
+      <div class="sigil" title="Level 2 — slightly inclined, breakup era">
+        <svg viewBox="0 0 60 40">
+          <ellipse cx="30" cy="20" rx="26" ry="7" transform="rotate(-10 30 20)" />
+          <!-- a few stray dots = fragmentation hint -->
+          <circle cx="10" cy="14" r="0.8" fill="var(--amber-soft)" />
+          <circle cx="48" cy="26" r="0.8" fill="var(--amber-soft)" />
+          <circle cx="36" cy="11" r="0.8" fill="var(--amber-soft)" />
+          <circle class="node" cx="44" cy="14" r="2" />
+        </svg>
+      </div>
+      <div class="title-block">
+        <div class="level-num">Mission · 02</div>
+        <div class="level-name">The Breakup</div>
+        <div class="epoch">1990 — 2006</div>
+      </div>
+      <div class="divider"></div>
+      <div class="hero">
+        <canvas id="hero2" width="280" height="200"></canvas>
+      </div>
+      <div class="band">Information</div>
+      <div class="band-body">
+        Rocket stages cook off in vacuum and explode silently. 190 known breakups between 1961 and 2006.
+        <div style="margin-top:8px; color: var(--amber-soft); letter-spacing: 0.2em; font-size: 9px;">
+          NEW: FRAGMENTATION · RARE ARTIFACTS
+        </div>
+      </div>
+    </article>
+
+    <!-- ===== CARD 3 — LOCKED ===== -->
+    <article class="card locked">
+      <span class="br"></span>
+      <div class="sigil" title="Level 3 — polar orbit, FY-1C">
+        <svg viewBox="0 0 60 40">
+          <!-- polar = nearly vertical ellipse -->
+          <ellipse cx="30" cy="20" rx="4" ry="16" />
+          <circle class="node" cx="30" cy="8" r="2" />
+        </svg>
+      </div>
+      <div class="title-block">
+        <div class="level-num">Mission · 03</div>
+        <div class="level-name">The Test</div>
+        <div class="epoch">11 Jan 2007</div>
+      </div>
+      <div class="divider"></div>
+      <div class="hero"></div>
+      <div class="band-body">
+        Locked — complete Mission 02 to unlock.
+      </div>
+    </article>
+
+  </div>
+
+</div>
+
+<script>
+  /* ===== View toggle ===== */
+  const buttons = document.querySelectorAll('.view-toggle button');
+  buttons.forEach(b => {
+    b.addEventListener('click', () => {
+      buttons.forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      const view = b.dataset.view;
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('screen-' + view).classList.add('active');
+    });
+  });
+
+  /* ===== Hero canvas — Level 1 cleared (sparse, calm starscape with a drifting Vanguard-style satellite silhouette) ===== */
+  function drawHero1(canvas) {
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    // Aged sepia overlay — this one is "completed/archival"
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#0a0d12');
+    g.addColorStop(1, '#1a1410');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+    // Earth horizon at bottom (very subtle)
+    const eg = ctx.createRadialGradient(W * 0.7, H + 80, 30, W * 0.7, H + 80, 200);
+    eg.addColorStop(0, 'rgba(180, 120, 80, 0.4)');
+    eg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = eg; ctx.fillRect(0, 0, W, H);
+
+    // Sparse stars
+    ctx.fillStyle = 'rgba(232,228,212,0.6)';
+    for (let i = 0; i < 24; i++) {
+      ctx.fillRect(Math.random() * W, Math.random() * H * 0.7, 1, 1);
+    }
+
+    // Single satellite silhouette (Vanguard-like sphere with antennas)
+    const cx = W * 0.45, cy = H * 0.45;
+    ctx.strokeStyle = 'rgba(111, 163, 137, 0.7)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.stroke();
+    // antennas
+    [0, 90, 180, 270].forEach(deg => {
+      const r = deg * Math.PI / 180;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(r) * 9, cy + Math.sin(r) * 9);
+      ctx.lineTo(cx + Math.cos(r) * 22, cy + Math.sin(r) * 22);
+      ctx.stroke();
+    });
+
+    // Orbital trace
+    ctx.strokeStyle = 'rgba(111, 163, 137, 0.25)';
+    ctx.beginPath();
+    ctx.ellipse(W / 2, H * 0.55, 130, 18, -0.1, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Catalog label
+    ctx.fillStyle = 'rgba(232,228,212,0.7)';
+    ctx.font = '9px "IBM Plex Mono", monospace';
+    ctx.fillText('VANGUARD 1 · 1958 · USA', 14, H - 16);
+    ctx.fillStyle = 'rgba(160,154,134,0.6)';
+    ctx.fillText('NORAD 00005', 14, H - 4);
+  }
+
+  /* ===== Hero canvas — Level 2 active (rocket stage fragmenting against warm atmosphere) ===== */
+  function drawHero2(canvas) {
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    // Warmer painterly backdrop — this card is illuminated
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#0d111a');
+    g.addColorStop(0.7, '#2a1a14');
+    g.addColorStop(1, '#5a2a18');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+    // Atmospheric airglow at limb (thin warm line near bottom)
+    const eg = ctx.createRadialGradient(W * 0.6, H + 60, 20, W * 0.6, H + 60, 220);
+    eg.addColorStop(0, 'rgba(255, 140, 80, 0.6)');
+    eg.addColorStop(0.4, 'rgba(255, 100, 50, 0.2)');
+    eg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = eg; ctx.fillRect(0, 0, W, H);
+
+    // Earth curve hint
+    ctx.strokeStyle = 'rgba(255, 180, 100, 0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(W * 0.6, H + 60, 220, Math.PI, Math.PI * 2);
+    ctx.stroke();
+
+    // Stars
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    for (let i = 0; i < 18; i++) {
+      ctx.fillRect(Math.random() * W, Math.random() * H * 0.5, 1, 1);
+    }
+
+    // Rocket stage silhouette mid-frame
+    const cx = W * 0.4, cy = H * 0.4;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(-0.4);
+    ctx.strokeStyle = 'rgba(255, 181, 71, 0.85)';
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(-22, -5, 44, 10);
+    // nozzle
+    ctx.beginPath();
+    ctx.moveTo(-22, -5); ctx.lineTo(-30, -8);
+    ctx.moveTo(-22, 5); ctx.lineTo(-30, 8);
+    ctx.stroke();
+    ctx.restore();
+
+    // Fragmentation lines emanating from the stage
+    ctx.strokeStyle = 'rgba(255, 181, 71, 0.7)';
+    ctx.lineWidth = 0.8;
+    for (let i = 0; i < 7; i++) {
+      const a = (i / 7) * Math.PI * 2 + 0.3;
+      const r1 = 18, r2 = 22 + Math.random() * 18;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
+      ctx.lineTo(cx + Math.cos(a) * r2, cy + Math.sin(a) * r2);
+      ctx.stroke();
+    }
+    // small frag dots further out
+    ctx.fillStyle = 'rgba(255, 181, 71, 0.6)';
+    for (let i = 0; i < 12; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const r = 35 + Math.random() * 40;
+      ctx.fillRect(cx + Math.cos(a) * r, cy + Math.sin(a) * r, 1.5, 1.5);
+    }
+
+    // Catalog label
+    ctx.fillStyle = 'rgba(255, 181, 71, 0.95)';
+    ctx.font = '9px "IBM Plex Mono", monospace';
+    ctx.fillText('SL-8 R/B · 1992 · USSR', 14, H - 16);
+    ctx.fillStyle = 'rgba(232,228,212,0.7)';
+    ctx.fillText('FRAGMENTATION EVENT', 14, H - 4);
+  }
+
+  drawHero1(document.getElementById('hero1'));
+  drawHero2(document.getElementById('hero2'));
+</script>
+
+</body>
+</html>

@@ -1,0 +1,152 @@
+.stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Vertical gradient: deep void → warm airglow at the horizon */
+.gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    var(--void) 0%,
+    var(--space) 30%,
+    var(--night) 55%,
+    var(--horizon-cold) 72%,
+    var(--horizon-warm) 90%,
+    var(--limb) 100%
+  );
+}
+
+/* Earth limb — curved arc, lower right */
+.limb {
+  position: absolute;
+  bottom: -55vh;
+  right: -25vw;
+  width: 130vh;
+  height: 130vh;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 35%,
+    #d97045 0%,
+    #8c3a1f 35%,
+    #2d1208 65%,
+    #0a0509 90%
+  );
+  box-shadow:
+    inset 0 0 200px rgba(255, 140, 80, 0.25),
+    0 0 180px rgba(255, 120, 60, 0.18);
+  opacity: 0.78;
+}
+
+/* Thin warm band at the limb edge — 8s gentle pulse */
+.airglow {
+  position: absolute;
+  bottom: -55vh;
+  right: -25vw;
+  width: 130vh;
+  height: 130vh;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2px rgba(255, 180, 100, 0.35),
+    0 0 40px 8px rgba(255, 140, 70, 0.20),
+    0 0 120px 20px rgba(255, 100, 50, 0.10);
+  animation: airglowPulse 8s ease-in-out infinite;
+}
+
+@keyframes airglowPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.78; }
+}
+
+/* Star field — two layers of box-shadow points, slow horizontal drift */
+.stars {
+  position: absolute;
+  inset: 0;
+}
+.stars::before,
+.stars::after {
+  content: "";
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: white;
+}
+.stars::before {
+  opacity: 0.35;
+  animation: starDrift 180s linear infinite;
+  box-shadow:
+    4vw 8vh 0 0.5px #aab, 11vw 22vh 0 0.5px #ccd, 17vw 5vh 0 0.5px #abc,
+    23vw 17vh 0 0.5px #aab, 31vw 31vh 0 0.5px #ccd, 38vw 7vh 0 0.5px #aab,
+    44vw 19vh 0 0.5px #bbc, 51vw 38vh 0 0.5px #aab, 57vw 11vh 0 0.5px #ccd,
+    63vw 26vh 0 0.5px #aab, 71vw 43vh 0 0.5px #ccd, 78vw 15vh 0 0.5px #bbc,
+    85vw 28vh 0 0.5px #aab, 92vw 9vh 0 0.5px #ccd, 6vw 48vh 0 0.5px #aab,
+    14vw 55vh 0 0.5px #ccd, 27vw 49vh 0 0.5px #aab, 42vw 60vh 0 0.5px #ccd,
+    67vw 53vh 0 0.5px #aab, 8vw 36vh 0 0.5px #ccd, 35vw 42vh 0 0.5px #aab,
+    48vw 14vh 0 0.5px #bbc, 74vw 22vh 0 0.5px #ccd, 88vw 38vh 0 0.5px #aab;
+}
+.stars::after {
+  opacity: 0.85;
+  animation: starDrift 120s linear infinite;
+  box-shadow:
+    9vw 13vh 0 0.5px #fff, 19vw 27vh 0 0.5px #fff, 33vw 9vh 0 0.5px #fff,
+    46vw 32vh 0 0.5px #fff, 59vw 17vh 0 0.5px #fff, 72vw 5vh 0 0.5px #fff,
+    83vw 24vh 0 0.5px #fff, 12vw 42vh 0 0.5px #fff, 27vw 38vh 0 0.5px #fff,
+    55vw 47vh 0 0.5px #fff, 69vw 35vh 0 0.5px #fff, 3vw 19vh 0 0.5px #fff,
+    89vw 14vh 0 0.5px #fff, 40vw 49vh 0 0.5px #fff;
+}
+
+@keyframes starDrift {
+  from { transform: translateX(0); }
+  to { transform: translateX(-4vw); }
+}
+
+/* Orbital traces — hairline ellipses. The layer is stretched to the
+   viewport (preserveAspectRatio: none), so full rotations would distort
+   the ellipses into harsh diagonals — drift with a slow ±4° sway instead. */
+.traces {
+  position: absolute;
+  inset: 0;
+  opacity: 0.45;
+  animation: traceSway 240s ease-in-out infinite;
+}
+.traces svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.traces ellipse {
+  fill: none;
+  stroke: var(--amber-soft);
+  stroke-width: 0.5;
+  opacity: 0.35;
+}
+
+@keyframes traceSway {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+
+/* Narrow / squarish viewports: the 130vh limb would swallow the frame —
+   pull it further into the corner and shrink it. */
+@media (max-aspect-ratio: 6/5) {
+  .limb,
+  .airglow {
+    width: 105vh;
+    height: 105vh;
+    bottom: -65vh;
+    right: -55vw;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .airglow,
+  .stars::before,
+  .stars::after,
+  .traces {
+    animation: none;
+  }
+}
