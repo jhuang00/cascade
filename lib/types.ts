@@ -163,6 +163,7 @@ export interface LevelConfig {
   passScore: number;
   hardFails: HardFails;
   outroFact: string;
+  junkSpeed?: number; // launch-velocity multiplier for junk (default 1)
   isL3?: boolean;
   isL4?: boolean;
   isL5?: boolean;

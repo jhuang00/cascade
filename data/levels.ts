@@ -20,7 +20,7 @@ export const LEVELS: LevelConfig[] = [
     ],
     duration: 60,
     spawn: { junk: 55, active: 0, rare: 0 },
-    passScore: 100,
+    passScore: 150,
     hardFails: { missed: 12 },
     outroFact: 'Vanguard 1, launched in 1958, is the oldest human-made object still in orbit. It will remain there for an estimated 240 more years. By 1990 there were approximately 5,000 catalogued objects in orbit.',
   },

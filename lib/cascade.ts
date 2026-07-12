@@ -12,10 +12,11 @@ interface CascadeState {
   pendingSpawns: number;  // cascade queue: pieces to spawn from missed debris
   frameCount: number;
   levelStartMs: number;
+  junkSpeed: number;      // launch-velocity multiplier from the level config
 }
 
 function makeCascadeState(): CascadeState {
-  return { density: 0, pendingSpawns: 0, frameCount: 0, levelStartMs: 0 };
+  return { density: 0, pendingSpawns: 0, frameCount: 0, levelStartMs: 0, junkSpeed: 1 };
 }
 
 export type CascadeManager = ReturnType<typeof createCascadeManager>;
@@ -30,9 +31,10 @@ export function createCascadeManager() {
   }
 
   return {
-    start(levelStartMs: number): void {
+    start(levelStartMs: number, junkSpeed = 1): void {
       s = makeCascadeState();
       s.levelStartMs = levelStartMs;
+      s.junkSpeed = junkSpeed;
     },
 
     setWidth(w: number): void { W = w; },
@@ -73,12 +75,12 @@ export function createCascadeManager() {
       // Base spawn — accelerating
       const interval = currentSpawnInterval();
       if (s.frameCount % interval === 0) {
-        gs.objs.push(spawnCascadeJunk(W, H));
+        gs.objs.push(spawnCascadeJunk(W, H, s.junkSpeed));
       }
 
       // Cascade queue — drip in pending spawns to avoid sudden bursts
       if (s.pendingSpawns > 0 && s.frameCount % 10 === 0) {
-        gs.objs.push(spawnCascadeJunk(W, H));
+        gs.objs.push(spawnCascadeJunk(W, H, s.junkSpeed));
         s.pendingSpawns = Math.max(0, s.pendingSpawns - 1);
       }
 

@@ -360,7 +360,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
     gs.activeTimer++;
     gs.rareTimer++;
     if (spawnCfg.junk > 0 && gs.junkTimer > spawnCfg.junk) {
-      gs.objs.push(spawnJunk(W, H, withFrag));
+      gs.objs.push(spawnJunk(W, H, withFrag, lv.junkSpeed ?? 1));
       gs.junkTimer = 0;
     }
     if (spawnCfg.active > 0 && gs.activeTimer > spawnCfg.active) {
@@ -692,7 +692,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
       if (lv) gs.timeRemaining = lv.duration;
       if (lv?.isL3) l3.start(gs.levelStartMs);
       if (lv?.isL4) l4.start(gs.levelStartMs);
-      if (lv?.isL6) cascade.start(gs.levelStartMs);
+      if (lv?.isL6) cascade.start(gs.levelStartMs, lv.junkSpeed ?? 1);
       Telemetry.startRun(levelIdx);
       // L6 is the cascade keystone — open on tension; other levels get the
       // ambient bed (cinematic levels switch to tension at their missile beat).

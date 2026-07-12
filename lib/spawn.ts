@@ -22,8 +22,9 @@ function catalogLabel(entry: CatalogEntry): string {
 
 const JUNK_PALETTE = ['#9aa0aa', '#7c8088', '#a8acb6', '#b89878', '#8a8e98', '#c4956a'];
 
-// withFragmentation=true causes junk to split mid-flight (L2+)
-export function spawnJunk(W: number, H: number, withFragmentation = false): GameObject {
+// withFragmentation=true causes junk to split mid-flight (L2+).
+// speedScale multiplies launch velocity — per-level tuning lever (data/levels.ts junkSpeed).
+export function spawnJunk(W: number, H: number, withFragmentation = false, speedScale = 1): GameObject {
   const fromLeft = Math.random() > 0.5;
   const x = fromLeft ? 40 + Math.random() * W * 0.25 : W - 40 - Math.random() * W * 0.25;
   const targetX = fromLeft ? W * 0.55 + Math.random() * W * 0.35 : W * 0.1 + Math.random() * W * 0.35;
@@ -33,8 +34,8 @@ export function spawnJunk(W: number, H: number, withFragmentation = false): Game
     type: 'junk',
     x,
     y: H + 30,
-    vx: (targetX - x) / 95,
-    vy: -10.5 - Math.random() * 2.5,
+    vx: ((targetX - x) / 95) * speedScale,
+    vy: (-10.5 - Math.random() * 2.5) * speedScale,
     rot: Math.random() * Math.PI * 2,
     vrot: (Math.random() - 0.5) * 0.07,
     verts: makePoly(r),
@@ -48,7 +49,9 @@ export function spawnJunk(W: number, H: number, withFragmentation = false): Game
 // Spawn two child pieces when a junk fragment splits
 export function spawnJunkSplit(parent: GameObject): [GameObject, GameObject] {
   const r = parent.r * 0.6;
-  const spread = 0.8 + Math.random() * 0.6;
+  // Gentle drift only: children continue at the parent's pace and separate
+  // visually — a strong kick here reads as debris suddenly speeding up.
+  const spread = 0.2 + Math.random() * 0.15;
   const a = Math.random() * Math.PI * 2;
   const base: Omit<GameObject, 'x' | 'y' | 'vx' | 'vy'> = {
     type: 'junk',
@@ -170,8 +173,8 @@ export function spawnCollisionFragment(cx: number, cy: number): GameObject {
 }
 
 // L6: Cascade fragment — smaller, faster
-export function spawnCascadeJunk(W: number, H: number): GameObject {
-  const j = spawnJunk(W, H, false);
+export function spawnCascadeJunk(W: number, H: number, speedScale = 1): GameObject {
+  const j = spawnJunk(W, H, false, speedScale);
   j.r = Math.max(10, j.r * 0.75);
   j.verts = makePoly(j.r);
   return j;

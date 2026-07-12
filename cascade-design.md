@@ -154,7 +154,7 @@ Every level has a binary outcome: pass or fail. Failed levels must be replayed b
 
 | Level | Threshold | Miss limit | Destroy limit | Time | Notes |
 |-------|-----------|------------|---------------|------|-------|
-| 1 | 100 pts | 12 | n/a | 60s | ~10 net junk slices |
+| 1 | 150 pts | 12 | n/a | 60s | ~15 net junk slices (raised from 100 after playtest — 10 ended the level too fast) |
 | 2 | 250 pts | 15 | 3 | 75s | Multiple paths: 25 slices, or 15+1 rare, or 5+2 rares |
 | 3 (planned) | 500 pts | n/a (event-driven) | 1 | event | Must catch ≥ 8 of FY-1C's 40 fragments |
 | 4 (planned) | 600 pts | n/a | 1 (the live sat) | ~60s | Must prevent collision OR clean its aftermath |
