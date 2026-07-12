@@ -2,6 +2,7 @@
 import { use, useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import GameCanvas from '@/components/GameCanvas';
+import DebugOverlay from '@/components/DebugOverlay';
 import HUD from '@/components/HUD';
 import LevelIntro from '@/components/LevelIntro';
 import LevelOutro from '@/components/LevelOutro';
@@ -190,6 +191,9 @@ export default function PlayPage({ params }: Props) {
 
         {/* Gameplay HUD (score, time, misses) */}
         <HUD />
+
+        {/* Playtest telemetry (dev-only, ?debug=1) */}
+        <DebugOverlay />
 
         {/* Screen overlays */}
         <LevelIntro onBegin={handleBegin} />

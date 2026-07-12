@@ -9,6 +9,7 @@ import { createL3Manager } from '@/lib/l3Cinematic';
 import { createL4Manager } from '@/lib/l4Cinematic';
 import { createCascadeManager } from '@/lib/cascade';
 import * as Audio from '@/lib/audio';
+import * as Telemetry from '@/lib/telemetry';
 import { ambientBGM, tensionBGM } from '@/lib/music';
 
 // World height is locked; world width adapts to the device aspect ratio so the
@@ -128,6 +129,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
     levelEnded = true;
     gs.playing = false;
     gs.ended = true;
+    Telemetry.endRun(success, gs, failReason, extras?.survivalTime);
     Audio.stopMusic();
     if (success) Audio.playLevelWin(); else Audio.playLevelLose();
     cbs.onLevelEnd(success, failReason, extras);
@@ -637,6 +639,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
       renderTrail();
       renderCollectMode();
 
+      Telemetry.sample(gs, lv?.isL6 ?? false);
       if (frameCount % 3 === 0) pushDisplay();
       checkWinLoss();
     } else {
@@ -689,6 +692,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
       if (lv?.isL3) l3.start(gs.levelStartMs);
       if (lv?.isL4) l4.start(gs.levelStartMs);
       if (lv?.isL6) cascade.start(gs.levelStartMs);
+      Telemetry.startRun(levelIdx);
       // L6 is the cascade keystone — open on tension; other levels get the
       // ambient bed (cinematic levels switch to tension at their missile beat).
       Audio.startMusic(lv?.isL6 ? tensionBGM : ambientBGM);
