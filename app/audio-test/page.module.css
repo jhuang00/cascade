@@ -1,0 +1,111 @@
+.page {
+  min-height: 100vh;
+  background: #060a12;
+  color: #9fd6f5;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  padding: 32px 24px 80px;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 18px;
+  letter-spacing: 0.2em;
+  color: #cfe8f8;
+  margin: 0 0 4px;
+}
+
+.note {
+  font-size: 12px;
+  color: #4f7791;
+  margin: 0 0 28px;
+}
+
+.section {
+  margin-bottom: 28px;
+  border-top: 1px solid #12293c;
+  padding-top: 16px;
+}
+
+.section h2 {
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7ac0e8;
+  margin: 0 0 12px;
+}
+
+.dim {
+  color: #4f7791;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.btn,
+.selected {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  background: #0a1522;
+  border: 1px solid #1d3a52;
+  color: #9fd6f5;
+  padding: 10px 14px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  flex: 1 1 180px;
+}
+
+.btn span,
+.selected span {
+  color: #4f7791;
+  font-size: 11px;
+}
+
+.selected {
+  border-color: #7ac0e8;
+  background: #0e2236;
+}
+
+.btnSmall,
+.selectedSmall {
+  background: #0a1522;
+  border: 1px solid #1d3a52;
+  color: #9fd6f5;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.selectedSmall {
+  border-color: #7ac0e8;
+  background: #0e2236;
+}
+
+.btn:hover,
+.btnSmall:hover {
+  border-color: #7ac0e8;
+}
+
+.slider {
+  display: block;
+  font-size: 12px;
+  color: #7ac0e8;
+  margin: 10px 0;
+}
+
+.slider input {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  accent-color: #7ac0e8;
+}

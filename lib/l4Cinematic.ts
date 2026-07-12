@@ -73,7 +73,7 @@ export function createL4Manager() {
         s.fragments.push(spawnCollisionFragment(cx, cy));
       }
       explosionFx(gs, cx, cy);
-      Audio.playExplosion();
+      Audio.playExplosion(Audio.panFromX(cx, W));
       s.collisionFired = true;
       s.branch = 'collision';
     } else if (newPhase === 'safe') {
@@ -179,7 +179,7 @@ export function createL4Manager() {
         gs.labels.push({ x: s.cosmos2251.x, y: s.cosmos2251.y - 8, text: '+50 · dead satellite cleared', life: 60, maxLife: 60, color: '#7ac0e8' });
         s.cosmosDeflected = true;
         transitionPhase('deflected', gs);
-        Audio.playSlice();
+        Audio.playSlice({ pan: Audio.panFromX(mx, W), velocity: 0.8 });
         return true;
       }
       return false;
@@ -197,7 +197,7 @@ export function createL4Manager() {
           gs.cleared++;
           gs.score += 25;
           gs.labels.push({ x: f.x, y: f.y - 14, text: f.label, life: 40, maxLife: 40, color: '#9fd6f5' });
-          Audio.playSlice();
+          Audio.playSlice({ pan: Audio.panFromX(f.x, W), flavor: 'fragment' });
           hit = true;
         }
       }

@@ -1,5 +1,9 @@
 node_modules/
 .next/
+# skill installs (restorable via `npx skills add`)
+.agents/
+.claude/skills/
+skills-lock.json
 out/
 tsconfig.tsbuildinfo
 .DS_Store

@@ -1,11 +1,15 @@
 // Cascade audio engine — zero-dependency Web Audio API synthesis.
-// Signal graph:  sources → sfxGain / musicGain → master (mute) → limiter → destination
+// Signal graph:
+//   sources → [StereoPanner] → sfxGain ─┬→ master (mute) → limiter → destination
+//                                       └→ reverbSend → convolver → reverbReturn → master
+//   music sequencer ────────→ musicGain ─┴ (smaller reverb send)
 
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;        // mute control point (0 or 1)
 let sfxGain: GainNode | null = null;       // all one-shot SFX
 let musicGain: GainNode | null = null;     // BGM sequencer bus
 let noiseBuffer: AudioBuffer | null = null; // reusable white noise, built once
+let reverb: ConvolverNode | null = null;   // shared space, generated impulse
 let muted = false;
 let resumeBound = false;
 
@@ -13,6 +17,8 @@ let resumeBound = false;
 // old master gain of 0.5 so existing per-sound gains keep their tuned loudness.
 const SFX_LEVEL = 0.5;
 const MUSIC_LEVEL = 0.6;
+const SFX_REVERB_SEND = 0.16;
+const MUSIC_REVERB_SEND = 0.10;
 
 export function initAudio(): void {
   if (ctx) {
@@ -49,6 +55,25 @@ export function initAudio(): void {
   const data = noiseBuffer.getChannelData(0);
   for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
 
+  // Shared reverb: generated stereo impulse (decaying noise burst) gives the
+  // dry synths a sense of space without any audio assets.
+  reverb = ctx.createConvolver();
+  reverb.buffer = makeImpulse(ctx, 1.5, 2.8);
+  const reverbReturn = ctx.createGain();
+  reverbReturn.gain.value = 1;
+  reverb.connect(reverbReturn);
+  reverbReturn.connect(master);
+
+  const sfxSend = ctx.createGain();
+  sfxSend.gain.value = SFX_REVERB_SEND;
+  sfxGain.connect(sfxSend);
+  sfxSend.connect(reverb);
+
+  const musicSend = ctx.createGain();
+  musicSend.gain.value = MUSIC_REVERB_SEND;
+  musicGain.connect(musicSend);
+  musicSend.connect(reverb);
+
   // Suspended contexts (tab backgrounding, iOS interruptions) resume on return.
   void ctx.resume();
   if (!resumeBound && typeof document !== 'undefined') {
@@ -59,6 +84,24 @@ export function initAudio(): void {
   }
 }
 
+// Stereo impulse response: white noise with an exponential decay tail.
+function makeImpulse(c: AudioContext, seconds: number, decay: number): AudioBuffer {
+  const len = Math.floor(c.sampleRate * seconds);
+  const buf = c.createBuffer(2, len, c.sampleRate);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = buf.getChannelData(ch);
+    for (let i = 0; i < len; i++) {
+      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+    }
+  }
+  return buf;
+}
+
+// Music patterns need the shared noise buffer for ambient beds.
+export function getNoiseBuffer(): AudioBuffer | null {
+  return noiseBuffer;
+}
+
 export function setMuted(m: boolean): void {
   muted = m;
   if (master) master.gain.value = muted ? 0 : 1;
@@ -67,6 +110,24 @@ export function setMuted(m: boolean): void {
 
 export function isMuted(): boolean {
   return muted;
+}
+
+// Pan helper: world x → stereo position, clamped so nothing sits hard L/R.
+export function panFromX(x: number, worldW: number): number {
+  const p = (x / worldW) * 2 - 1;
+  return Math.max(-0.85, Math.min(0.85, p));
+}
+
+// Returns the node a voice should connect into: a per-voice panner routed to
+// the SFX bus, or the bus itself when no pan is requested.
+function sfxOut(pan?: number): AudioNode {
+  if (pan !== undefined && pan !== 0 && ctx && typeof ctx.createStereoPanner === 'function') {
+    const p = ctx.createStereoPanner();
+    p.pan.value = pan;
+    p.connect(sfxGain!);
+    return p;
+  }
+  return sfxGain!;
 }
 
 // --- Music bus (BGM sequencer lives in lib/music.ts) ---
@@ -89,42 +150,195 @@ export function stopMusic(): void {
     try { currentMusic.stop(); } catch { /* already stopped */ }
     currentMusic = null;
   }
+  stopCascadeLayer();
 }
 
-// --- One-shot SFX ---
+// --- L6 cascade layer — continuous "control is slipping" drone ---
+// Intensity follows the density meter (0–100). Silent below the onset band,
+// then two beating saws + rising hiss open up as density climbs. Smoothed
+// with setTargetAtTime so meter jitter never causes zipper noise.
 
-// Slice — a soft knife cut ("shhk"): pure filtered noise, no tonal layer. A
-// modest downward bandpass sweep gives the "shng" of a blade pulling through;
-// a lowpass tames the harsh top so it doesn't read as too sharp. Soft attack
-// avoids the slap-click. Every parameter jitters so no two slices match.
-export function playSlice(): void {
-  if (!ctx || !sfxGain || !noiseBuffer || muted) return;
+const CASCADE_ONSET = 20; // density where the layer becomes audible
+
+interface CascadeLayer {
+  oscA: OscillatorNode;
+  oscB: OscillatorNode;
+  hiss: AudioBufferSourceNode;
+  gain: GainNode;
+  hissGain: GainNode;
+  lpf: BiquadFilterNode;
+}
+let cascadeLayer: CascadeLayer | null = null;
+
+export function setCascadeIntensity(density: number): void {
+  if (!ctx || !musicGain || !noiseBuffer || muted) return;
+  const t = Math.max(0, Math.min(1, (density - CASCADE_ONSET) / (100 - CASCADE_ONSET)));
+
+  if (!cascadeLayer) {
+    if (t <= 0) return; // nothing to hear yet — don't build the graph
+    const gain = ctx.createGain();
+    gain.gain.value = 0.0001;
+    const lpf = ctx.createBiquadFilter();
+    lpf.type = 'lowpass';
+    lpf.frequency.value = 300;
+    lpf.connect(gain);
+    gain.connect(musicGain);
+
+    const oscA = ctx.createOscillator();
+    oscA.type = 'sawtooth';
+    oscA.frequency.value = 55; // A1 — same root as the score
+    const oscB = ctx.createOscillator();
+    oscB.type = 'sawtooth';
+    oscB.frequency.value = 55.6;
+    oscA.connect(lpf);
+    oscB.connect(lpf);
+    oscA.start();
+    oscB.start();
+
+    const hiss = ctx.createBufferSource();
+    hiss.buffer = noiseBuffer;
+    hiss.loop = true;
+    const hp = ctx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = 1200;
+    const hissGain = ctx.createGain();
+    hissGain.gain.value = 0.0001;
+    hiss.connect(hp);
+    hp.connect(hissGain);
+    hissGain.connect(musicGain);
+    hiss.start();
+
+    cascadeLayer = { oscA, oscB, hiss, gain, hissGain, lpf };
+  }
+
   const now = ctx.currentTime;
-  const dur = 0.09 + Math.random() * 0.04;
+  const L = cascadeLayer;
+  // Loudness, beat rate, and brightness all escalate with density.
+  L.gain.gain.setTargetAtTime(0.0001 + t * 0.15, now, 0.4);
+  L.hissGain.gain.setTargetAtTime(t * t * 0.05, now, 0.6);
+  L.lpf.frequency.setTargetAtTime(300 + t * 1900, now, 0.5);
+  L.oscB.frequency.setTargetAtTime(55 * (1.01 + t * 0.05), now, 0.5);
+}
 
-  const src = ctx.createBufferSource();
-  src.buffer = noiseBuffer;
+export function stopCascadeLayer(): void {
+  if (!cascadeLayer || !ctx) {
+    cascadeLayer = null;
+    return;
+  }
+  const L = cascadeLayer;
+  cascadeLayer = null;
+  const now = ctx.currentTime;
+  L.gain.gain.setTargetAtTime(0.0001, now, 0.15);
+  L.hissGain.gain.setTargetAtTime(0.0001, now, 0.15);
+  const stopAt = now + 1;
+  try { L.oscA.stop(stopAt); L.oscB.stop(stopAt); L.hiss.stop(stopAt); } catch { /* already stopped */ }
+}
+
+// --- Slice SFX ---
+// Three candidate designs, selectable at runtime (audio lab A/Bs them; the
+// picked variant persists so in-game play uses it too). All variants share
+// velocity sensitivity (gesture speed → brighter/louder) and per-object
+// flavor (fragments are smaller/higher, rares softer/warmer).
+
+export type SliceVariant = 'A' | 'B' | 'C';
+export type SliceFlavor = 'junk' | 'rare' | 'fragment';
+export interface SliceOpts {
+  pan?: number;      // -1..1
+  velocity?: number; // 0..1 gesture speed
+  flavor?: SliceFlavor;
+}
+
+// Production pick (July 2026 listening session): B — metallic shear.
+const SLICE_VARIANT_KEY = 'cascade-slice-variant';
+let sliceVariant: SliceVariant = 'B';
+if (typeof window !== 'undefined') {
+  try {
+    const v = localStorage.getItem(SLICE_VARIANT_KEY);
+    if (v === 'A' || v === 'B' || v === 'C') sliceVariant = v;
+  } catch { /* ignore */ }
+}
+
+export function setSliceVariant(v: SliceVariant): void {
+  sliceVariant = v;
+  try { localStorage.setItem(SLICE_VARIANT_KEY, v); } catch { /* ignore */ }
+}
+
+export function getSliceVariant(): SliceVariant {
+  return sliceVariant;
+}
+
+interface FlavorMods { pitch: number; dur: number; gain: number; lpf: number }
+function flavorMods(flavor: SliceFlavor): FlavorMods {
+  switch (flavor) {
+    case 'fragment': return { pitch: 1.45, dur: 0.7, gain: 0.8, lpf: 1.15 };
+    case 'rare':     return { pitch: 0.85, dur: 1.1, gain: 0.75, lpf: 0.7 };
+    default:         return { pitch: 1, dur: 1, gain: 1, lpf: 1 };
+  }
+}
+
+export function playSlice(opts: SliceOpts = {}): void {
+  playSliceVariant(sliceVariant, opts);
+}
+
+export function playSliceVariant(variant: SliceVariant, opts: SliceOpts = {}): void {
+  if (!ctx || !sfxGain || !noiseBuffer || muted) return;
+  const out = sfxOut(opts.pan);
+  const vel = opts.velocity ?? 0.5;
+  const mods = flavorMods(opts.flavor ?? 'junk');
+  if (variant === 'A') sliceLayeredKnife(out, vel, mods);
+  else if (variant === 'B') sliceMetallicShear(out, vel, mods);
+  else sliceWarmCut(out, vel, mods);
+}
+
+// Short broadband tick — the instant the blade first bites. Shared by all
+// variants; `bright` trades a glassy edge (A/B) for a padded thump (C).
+function sliceTransient(out: AudioNode, level: number, bright: boolean): void {
+  const now = ctx!.currentTime;
+  const src = ctx!.createBufferSource();
+  src.buffer = noiseBuffer!;
+  const dur = 0.008;
+  const filt = ctx!.createBiquadFilter();
+  if (bright) {
+    filt.type = 'highpass';
+    filt.frequency.value = 2000;
+  } else {
+    filt.type = 'lowpass';
+    filt.frequency.value = 3000;
+  }
+  const g = ctx!.createGain();
+  g.gain.setValueAtTime(level, now);
+  g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+  src.connect(filt);
+  filt.connect(g);
+  g.connect(out);
+  src.start(now, Math.random() * 1.5, dur);
+}
+
+// The current production sound: band-swept noise body ("shhk").
+function sliceBody(out: AudioNode, vel: number, mods: FlavorMods, durMul: number, lpfBase: number): number {
+  const now = ctx!.currentTime;
+  const dur = (0.09 + Math.random() * 0.04) * mods.dur * durMul;
+  const src = ctx!.createBufferSource();
+  src.buffer = noiseBuffer!;
   const offset = Math.random() * (2 - dur);
 
-  // Gentle highpass thins the low thump but leaves some body.
-  const hp = ctx.createBiquadFilter();
+  const hp = ctx!.createBiquadFilter();
   hp.type = 'highpass';
   hp.frequency.value = 350 + Math.random() * 100;
 
-  // Focused-but-not-whistly bandpass, swept modestly downward.
-  const bp = ctx.createBiquadFilter();
+  const bp = ctx!.createBiquadFilter();
   bp.type = 'bandpass';
   bp.Q.value = 1.2 + Math.random() * 0.6;
-  bp.frequency.setValueAtTime(2800 + Math.random() * 700, now);
-  bp.frequency.exponentialRampToValueAtTime(1200 + Math.random() * 400, now + dur);
+  const startF = (2800 + Math.random() * 700) * mods.pitch * (0.9 + vel * 0.3);
+  bp.frequency.setValueAtTime(startF, now);
+  bp.frequency.exponentialRampToValueAtTime((1200 + Math.random() * 400) * mods.pitch, now + dur);
 
-  // Lowpass removes the sharp "tss" so the cut stays warm.
-  const lp = ctx.createBiquadFilter();
+  const lp = ctx!.createBiquadFilter();
   lp.type = 'lowpass';
-  lp.frequency.value = 4500 + Math.random() * 500;
+  lp.frequency.value = (lpfBase + Math.random() * 500) * mods.lpf;
 
-  const gain = ctx.createGain();
-  const peak = 0.22 + Math.random() * 0.08;
+  const gain = ctx!.createGain();
+  const peak = (0.2 + Math.random() * 0.06 + vel * 0.08) * mods.gain;
   gain.gain.setValueAtTime(0.0001, now);
   gain.gain.linearRampToValueAtTime(peak, now + 0.005);
   gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
@@ -133,13 +347,93 @@ export function playSlice(): void {
   hp.connect(bp);
   bp.connect(lp);
   lp.connect(gain);
-  gain.connect(sfxGain);
+  gain.connect(out);
+  src.start(now, offset, dur);
+  return dur;
+}
+
+// Candidate A — layered knife: transient bite + noise body + a fast-decaying
+// metallic shimmer (detuned high partials), like a blade ringing off alloy.
+function sliceLayeredKnife(out: AudioNode, vel: number, mods: FlavorMods): void {
+  const now = ctx!.currentTime;
+  sliceTransient(out, (0.22 + vel * 0.1) * mods.gain, true);
+  sliceBody(out, vel, mods, 1, 4500);
+
+  const partials = [3150, 4400, 6100];
+  const gains = [0.05, 0.035, 0.022];
+  for (let i = 0; i < partials.length; i++) {
+    const osc = ctx!.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = partials[i] * mods.pitch * (1 + (Math.random() - 0.5) * 0.06);
+    const g = ctx!.createGain();
+    const decay = 0.05 + Math.random() * 0.07;
+    g.gain.setValueAtTime((gains[i] + vel * 0.02) * mods.gain, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + decay);
+    osc.connect(g);
+    g.connect(out);
+    osc.start(now);
+    osc.stop(now + decay + 0.02);
+  }
+}
+
+// Candidate B — metallic shear: noise driven through a comb resonance (short
+// feedback delay) so the cut "shings" at a metallic pitch that varies per hit.
+function sliceMetallicShear(out: AudioNode, vel: number, mods: FlavorMods): void {
+  const now = ctx!.currentTime;
+  sliceTransient(out, (0.2 + vel * 0.1) * mods.gain, true);
+
+  const dur = (0.13 + Math.random() * 0.05) * mods.dur;
+  const src = ctx!.createBufferSource();
+  src.buffer = noiseBuffer!;
+  const offset = Math.random() * (2 - dur);
+
+  const bp = ctx!.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.Q.value = 0.9;
+  bp.frequency.setValueAtTime(1800 * mods.pitch * (0.9 + vel * 0.3), now);
+  bp.frequency.exponentialRampToValueAtTime(900 * mods.pitch, now + dur);
+
+  // Comb: delay tuned to a metallic fundamental, feedback ringing it out.
+  const f0 = (550 + Math.random() * 300) * mods.pitch;
+  const delay = ctx!.createDelay(0.01);
+  delay.delayTime.value = 1 / f0;
+  const fb = ctx!.createGain();
+  fb.gain.value = 0.8;
+  delay.connect(fb);
+  fb.connect(delay);
+
+  const lp = ctx!.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = 5200 * mods.lpf;
+
+  const env = ctx!.createGain();
+  const peak = (0.16 + Math.random() * 0.05 + vel * 0.07) * mods.gain;
+  env.gain.setValueAtTime(0.0001, now);
+  env.gain.linearRampToValueAtTime(peak, now + 0.004);
+  env.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.08);
+
+  src.connect(bp);
+  bp.connect(delay);
+  bp.connect(lp); // direct path keeps some noise body under the ring
+  delay.connect(lp);
+  lp.connect(env);
+  env.connect(out);
   src.start(now, offset, dur);
 }
 
-export function playCollect(): void {
+// Candidate C — enhanced warm cut: the production sound with a soft transient
+// and a longer, darkening tail. Closest to the current feel.
+function sliceWarmCut(out: AudioNode, vel: number, mods: FlavorMods): void {
+  sliceTransient(out, (0.14 + vel * 0.08) * mods.gain, false);
+  sliceBody(out, vel, mods, 1.6, 4800);
+}
+
+// --- Other one-shot SFX ---
+
+export function playCollect(pan?: number): void {
   if (!ctx || !sfxGain || muted) return;
-  const notes = [659.25, 987.77];
+  const out = sfxOut(pan);
+  const notes = [659.25, 987.77]; // E5 → B5, both in A minor
   notes.forEach((freq, i) => {
     const delay = i * 0.045;
     const osc = ctx!.createOscillator();
@@ -151,14 +445,15 @@ export function playCollect(): void {
     gain.gain.linearRampToValueAtTime(0.16, now + 0.006);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
     osc.connect(gain);
-    gain.connect(sfxGain!);
+    gain.connect(out);
     osc.start(now);
     osc.stop(now + 0.5);
   });
 }
 
-export function playActiveHit(): void {
+export function playActiveHit(pan?: number): void {
   if (!ctx || !sfxGain || muted) return;
+  const out = sfxOut(pan);
   const osc = ctx.createOscillator();
   osc.type = 'sawtooth';
   osc.frequency.setValueAtTime(200, ctx.currentTime);
@@ -167,7 +462,7 @@ export function playActiveHit(): void {
   gain.gain.setValueAtTime(0.18, ctx.currentTime);
   gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
   osc.connect(gain);
-  gain.connect(sfxGain);
+  gain.connect(out);
   osc.start();
   osc.stop(ctx.currentTime + 0.4);
 }
@@ -175,20 +470,20 @@ export function playActiveHit(): void {
 export function playClick(): void {
   if (!ctx || !sfxGain || muted) return;
   const osc = ctx.createOscillator();
-  osc.type = 'square';
-  osc.frequency.value = 800;
+  osc.type = 'sine';
+  osc.frequency.value = 880; // A5 — in key, soft confirmation
   const gain = ctx.createGain();
-  gain.gain.setValueAtTime(0.05, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+  gain.gain.setValueAtTime(0.06, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
   osc.connect(gain);
   gain.connect(sfxGain);
   osc.start();
-  osc.stop(ctx.currentTime + 0.05);
+  osc.stop(ctx.currentTime + 0.06);
 }
 
 export function playLevelWin(): void {
   if (!ctx || !sfxGain || muted) return;
-  const notes = [523.25, 659.25, 783.99];
+  const notes = [440.00, 523.25, 659.25]; // A4 C5 E5 — A minor, matches the score
   notes.forEach((freq, i) => {
     const delay = i * 0.1;
     const osc = ctx!.createOscillator();
@@ -208,7 +503,7 @@ export function playLevelWin(): void {
 
 export function playLevelLose(): void {
   if (!ctx || !sfxGain || muted) return;
-  const notes = [392.00, 311.13];
+  const notes = [349.23, 329.63, 220.00]; // F4 → E4 → A3 lament, stays in key
   notes.forEach((freq, i) => {
     const delay = i * 0.18;
     const osc = ctx!.createOscillator();
@@ -248,8 +543,9 @@ export function playMissileLaunch(): void {
   osc.stop(ctx.currentTime + dur);
 }
 
-export function playExplosion(): void {
+export function playExplosion(pan?: number): void {
   if (!ctx || !sfxGain || !noiseBuffer || muted) return;
+  const out = sfxOut(pan);
   const osc = ctx.createOscillator();
   osc.type = 'sine';
   osc.frequency.setValueAtTime(70, ctx.currentTime);
@@ -258,7 +554,7 @@ export function playExplosion(): void {
   gain1.gain.setValueAtTime(0.45, ctx.currentTime);
   gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
   osc.connect(gain1);
-  gain1.connect(sfxGain);
+  gain1.connect(out);
   osc.start();
   osc.stop(ctx.currentTime + 0.6);
 
@@ -276,33 +572,6 @@ export function playExplosion(): void {
   gain2.gain.exponentialRampToValueAtTime(0.001, now + crackleDur);
   src.connect(filter);
   filter.connect(gain2);
-  gain2.connect(sfxGain);
+  gain2.connect(out);
   src.start(now, offset, crackleDur);
-}
-
-// L6 cascade — a dissonant, swelling "control is slipping" drone.
-export function playCascade(): void {
-  if (!ctx || !sfxGain || muted) return;
-  const dur = 2.2;
-  const now = ctx.currentTime;
-  // Two detuned low sawtooths beating against each other for unease.
-  [88, 92.5].forEach((freq) => {
-    const osc = ctx!.createOscillator();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(freq, now);
-    osc.frequency.exponentialRampToValueAtTime(freq * 0.5, now + dur);
-    const gain = ctx!.createGain();
-    gain.gain.setValueAtTime(0.001, now);
-    gain.gain.exponentialRampToValueAtTime(0.22, now + dur * 0.7);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
-    const filter = ctx!.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(400, now);
-    filter.frequency.exponentialRampToValueAtTime(1400, now + dur);
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(sfxGain!);
-    osc.start(now);
-    osc.stop(now + dur);
-  });
 }

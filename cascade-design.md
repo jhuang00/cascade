@@ -475,33 +475,22 @@ Baseline locked June 2026 via `cascade-visual-prototype.html`. See section 5.5 f
 
 Deferred for future polish: landmass features, scanline overlay, radar sweep, expanded label fields, transition effects between screens. None block Claude Code session 1.
 
-### 9.2 Audio and sound design — MEDIUM
+### 9.2 Audio and sound design — ✓ DONE (July 2026)
 
-**Current state.** 8 synthesized sounds via Web Audio API: slice, collect, active hit, UI click, level win, level lose, missile launch, explosion. No music. No ambient bed.
+Shipped in the `feat/audio-remediation` branch, all synthesized via Web Audio API (zero assets), built against the `/game-audio` skill standard:
+- Full SFX set with mixing buses (sfx/music) + limiter; mute persisted via localStorage, M key
+- BGM: look-ahead step sequencer (`lib/music.ts`) — ambient bed (pads + rumble/hiss noise drone) and tension pattern with anti-repetition (phrase variants, coprime layer lengths, note omission, humanize, filter drift; ~111s before realignment)
+- Slice SFX: "metallic shear" design (comb-resonant, velocity-sensitive, per-object flavor); two alternate candidates remain switchable at `/audio-test`
+- Spatial: stereo panning by object position; shared generated-impulse reverb send
+- L6 cascade: continuous drone tracking the density meter from ~20% (gain/detune/brightness escalate)
 
-**What's missing:**
-- Ambient soundscape — low rumble / vacuum hiss / distant radio chatter for background presence
-- Music or tonal layer to build tension during cinematic moments
-- Slice variation — currently every slice sounds identical (3-5 variants would feel less mechanical)
-- Spatial audio — sounds don't pan based on object position
-- Sound for level 6 cascade — needs a distinct "things are slipping out of control" tone
+Remaining (LOW, post-launch): distant radio chatter texture, original composition question.
 
-**Open decisions:**
-- Stay synthesized via Web Audio (current — free, instant, tunable) or supplement with recorded ambient bed from freesound.org / OpenGameArt.org (CC-licensed)
-- Original music composition (later) or stay sound-effects only
+### 9.3 Levels 4, 5, 6 — ✓ DONE (June 2026, "Stage 2" commit)
 
-### 9.3 Levels 4, 5, 6 — HIGH
+All three built and playable: L4 predictive collision with three outcome branches (save Iridium / deflect Cosmos / cleanup), L5 megaconstellation density tuning, L6 cascade physics with density meter and survival scoring (`lib/l4Cinematic.ts`, `lib/cascade.ts`).
 
-**Status:**
-- **L4 predictive collision (Iridium / Cosmos):** designed in section 6. Not built. Most novel mechanic still in design.
-- **L5 megaconstellation:** designed in section 6. Not built. Mainly a parameter-tuning level once mechanics are in place.
-- **L6 cascade:** designed in section 6. Not built. Largest remaining mechanic — cascade physics + density meter + survival scoring.
-
-**Recommended order:** L4 first (most novel, sets pattern for predictive mechanics). Then L6 (because cascade physics is the keystone of the whole game's thesis). Then L5 (essentially L2 + L4 mechanics dialed up).
-
-**Open decisions per level:**
-- L4: should regular junk spawn continue during the collision predictive window, or should the cinematic temporarily reduce background spawn (like L3)?
-- L6: what's the actual loss condition? Time limit? Score floor? Density saturation animation?
+Resolved decisions: L4 reduces background spawn during the predictive window (like L3); L6 loss condition is density saturation at 100. Difficulty numbers still need playtest calibration — see 9.4.
 
 ### 9.4 Pacing and difficulty calibration — MEDIUM
 
@@ -512,20 +501,11 @@ Deferred for future polish: landmass features, scanline overlay, radar sweep, ex
 - Does the difficulty curve feel right from L1 → L6?
 - Time pressure: should all levels be 60s, or should longer/shorter levels alternate?
 
-### 9.5 Progression and persistence — MEDIUM
+### 9.5 Progression and persistence — ✓ MOSTLY DONE (June 2026)
 
-**Current state:** No save state. Restart goes back to L1 every time.
+Shipped (`lib/progress.ts`, localStorage): per-level best scores, linear unlock (pass L(n) to open L(n+1)), level select from the menu, replay of unlocked levels, reset.
 
-**What's needed:**
-- Persistent storage of progress (localStorage is simplest)
-- Per-level high score tracking
-- Run-level scoring (total across all six)
-- Level select screen (currently linear-only)
-- Replay individual levels
-
-**Open decisions:**
-- Linear unlock (must pass L1 to access L2) or always-open?
-- Track which rare artifacts have been collected across all runs? "Museum" view?
+Remaining (LOW): run-level scoring across all six, rare-artifact collection log / "Museum" view — bundled with the endgame/replayability work in 9.7.
 
 ### 9.6 Tutorials and onboarding — LOW
 

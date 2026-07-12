@@ -11,11 +11,10 @@ interface CascadeState {
   pendingSpawns: number;  // cascade queue: pieces to spawn from missed debris
   frameCount: number;
   levelStartMs: number;
-  criticalPlayed: boolean; // one-shot "control slipping" cue fired once
 }
 
 function makeCascadeState(): CascadeState {
-  return { density: 0, pendingSpawns: 0, frameCount: 0, levelStartMs: 0, criticalPlayed: false };
+  return { density: 0, pendingSpawns: 0, frameCount: 0, levelStartMs: 0 };
 }
 
 export type CascadeManager = ReturnType<typeof createCascadeManager>;
@@ -87,10 +86,10 @@ export function createCascadeManager() {
         s.density = Math.min(100, s.density + 0.3);
       }
 
-      // One-shot cue when the cascade tips into the critical band.
-      if (!s.criticalPlayed && s.density >= 75) {
-        s.criticalPlayed = true;
-        Audio.playCascade();
+      // Continuous "control is slipping" drone tracks the density meter.
+      // Updated every 15 frames — the audio side smooths between values.
+      if (s.frameCount % 15 === 0) {
+        Audio.setCascadeIntensity(s.density);
       }
     },
 

@@ -76,7 +76,7 @@ export function createL3Manager() {
           s.fragments.push(spawnFragment(s.fy1c.x, s.fy1c.y));
         }
         explosionFx(gs, s.fy1c.x, s.fy1c.y);
-        Audio.playExplosion();
+        Audio.playExplosion(Audio.panFromX(s.fy1c.x, W));
         s.fy1cImpacted = true;
       }
     } else if (newPhase === 'aftermath') {
@@ -241,7 +241,7 @@ export function createL3Manager() {
           gs.cleared++;
           gs.score += 25;
           gs.labels.push({ x: f.x, y: f.y - 14, text: f.label, life: 40, maxLife: 40, color: '#9fd6f5' });
-          Audio.playSlice();
+          Audio.playSlice({ pan: Audio.panFromX(f.x, W), flavor: 'fragment' });
           hit = true;
         }
       }

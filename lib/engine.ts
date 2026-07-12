@@ -207,6 +207,8 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
     const dx = x2 - x1, dy = y2 - y1;
     if (dx * dx + dy * dy < 6) return;
     const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+    // Gesture speed → SFX brightness/level (28px per frame ≈ a fast flick).
+    const sliceVel = Math.min(1, Math.sqrt(dx * dx + dy * dy) / 28);
     const lv = LEVELS[gs.currentLevelIdx];
 
     if (lv?.isL3) {
@@ -233,7 +235,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
         gs.score += 10;
         gs.cleared++;
         gs.labels.push({ x: o.x, y: o.y - 18, text: o.label, life: 50, maxLife: 50, color: '#9fd6f5' });
-        Audio.playSlice();
+        Audio.playSlice({ pan: Audio.panFromX(o.x, W), velocity: sliceVel, flavor: o.fragmented ? 'fragment' : 'junk' });
       } else if (o.type === 'active') {
         gs.score -= 25;
         gs.destroyed++;
@@ -241,7 +243,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
         gs.labels.push({ x: o.x, y: o.y - 18, text: o.label + ' DESTROYED', life: 60, maxLife: 60, color: '#ff7a7a' });
         gs.labels.push({ x: o.x, y: o.y + 2, text: '−25 / infrastructure damaged', life: 55, maxLife: 55, color: '#ff5a5a' });
         gs.flashes.push({ x: o.x, y: o.y, r: 5, life: 20, maxLife: 20, color: '#ff5050' });
-        Audio.playActiveHit();
+        Audio.playActiveHit(Audio.panFromX(o.x, W));
         // L6: destroying active spawns 3 fragments and raises density
         if (lv?.isL6) {
           cascade.onActiveDestroyed();
@@ -267,7 +269,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
       } else if (o.type === 'rare') {
         gs.score += 5;
         gs.labels.push({ x: o.x, y: o.y - 18, text: o.label + ' lost', life: 55, maxLife: 55, color: '#ffb070' });
-        Audio.playSlice();
+        Audio.playSlice({ pan: Audio.panFromX(o.x, W), velocity: sliceVel, flavor: 'rare' });
       }
       pushDisplay();
     }
@@ -312,7 +314,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
         gs.collected++;
         gs.labels.push({ x: o.x, y: o.y - 18, text: o.label, life: 65, maxLife: 65, color: '#ffe0a8' });
         gs.labels.push({ x: o.x, y: o.y + 2, text: '+100 preserved', life: 60, maxLife: 60, color: '#ffd080' });
-        Audio.playCollect();
+        Audio.playCollect(Audio.panFromX(o.x, W));
         pushDisplay();
         return;
       }
@@ -326,7 +328,7 @@ export function createEngine(canvas: HTMLCanvasElement, cbs: EngineCallbacks) {
         gs.densityMeter = cascade.getDensity();
         gs.labels.push({ x: o.x, y: o.y - 18, text: o.label, life: 65, maxLife: 65, color: '#ffe0a8' });
         gs.labels.push({ x: o.x, y: o.y + 2, text: '+50 · density relieved', life: 60, maxLife: 60, color: '#ffd080' });
-        Audio.playCollect();
+        Audio.playCollect(Audio.panFromX(o.x, W));
         pushDisplay();
         return;
       }
